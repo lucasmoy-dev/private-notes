@@ -227,8 +227,36 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered'))
+                    .then(reg => {
+                        console.log('SW registered');
+
+                        // Check for updates on load
+                        reg.update();
+
+                        // Detect if a new service worker is found
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        // New version available! 
+                                        // SW will activate automatically because of self.skipWaiting()
+                                        console.log('New version found, updating...');
+                                    }
+                                }
+                            };
+                        };
+                    })
                     .catch(err => console.log('SW failed', err));
+
+                // Reload the page when the new service worker takes control
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
             });
         }
 
@@ -679,6 +707,7 @@
             const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
             const [tempLabel, setTempLabel] = useState(localLabel);
             const [encConfig, setEncConfig] = useState(Database.config);
+            const [resetPhrase, setResetPhrase] = useState('');
 
             const updateEnc = (key, val) => {
                 const newC = { ...encConfig, [key]: val };
@@ -698,6 +727,13 @@
                 toggleSync(false);
             };
 
+            const handleReset = () => {
+                if (resetPhrase === 'DELETE EVERYTHING') {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            };
+
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
                     <div className="glass max-w-md w-full rounded-[2rem] border border-white/10 shadow-3xl animate-pop overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -707,7 +743,7 @@
                             {view === 'MAIN' ? (
                                 <h2 className="text-xl font-bold">Settings</h2>
                             ) : (
-                                <button onClick={() => setView('MAIN')} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+                                <button onClick={() => { setView('MAIN'); setResetPhrase(''); }} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
                                     <Icon name="arrow-left" size={18} />
                                     <span className="font-medium">Back</span>
                                 </button>
@@ -772,6 +808,17 @@
                                             Use "Add to Home Screen" to install app
                                         </div>
                                     )}
+
+                                    <div className="h-px bg-white/5 my-2"></div>
+
+                                    {/* Danger Zone */}
+                                    <div className="flex items-center justify-between p-4 bg-red-500/5 rounded-2xl border border-red-500/10 cursor-pointer hover:bg-red-500/10 transition-all" onClick={() => setView('RESET')}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-red-500/10 rounded-full"><Icon name="trash-2" className="text-red-400" /></div>
+                                            <div className="font-medium text-red-400">Danger Zone</div>
+                                        </div>
+                                        <Icon name="chevron-right" className="text-red-400" />
+                                    </div>
                                 </div>
                             )}
 
@@ -914,6 +961,37 @@
                                             <span>Save for Google Drive</span>
                                         </button>
                                     </div>
+                                </div>
+                            )}
+
+                            {view === 'RESET' && (
+                                <div className="space-y-6 animate-pop">
+                                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
+                                        <h3 className="text-sm font-bold text-red-500 flex items-center gap-2"><Icon name="alert-triangle" size={16} /> Factory Reset</h3>
+                                        <p className="text-xs text-gray-300 leading-relaxed">
+                                            This action will <strong>permanently delete all notes, settings, and keys</strong> from this device.
+                                            Data cannot be recovered unless you have a backup.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-xs uppercase font-bold text-gray-500 pl-1">Type "DELETE EVERYTHING" to confirm</label>
+                                        <input
+                                            type="text"
+                                            value={resetPhrase}
+                                            onChange={e => setResetPhrase(e.target.value)}
+                                            className="w-full bg-black/20 p-3 rounded-xl border border-red-500/30 text-sm font-bold text-red-400 outline-none focus:border-red-500 placeholder:text-red-500/20"
+                                            placeholder="DELETE EVERYTHING"
+                                        />
+                                    </div>
+
+                                    <button
+                                        disabled={resetPhrase !== 'DELETE EVERYTHING'}
+                                        onClick={handleReset}
+                                        className={`w-full py-3 font-bold rounded-xl transition-all border ${resetPhrase === 'DELETE EVERYTHING' ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20' : 'bg-white/5 text-gray-500 border-white/5 cursor-not-allowed'}`}
+                                    >
+                                        Reset Application
+                                    </button>
                                 </div>
                             )}
                         </div>
