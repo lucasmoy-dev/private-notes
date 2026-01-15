@@ -9,7 +9,12 @@ const CryptoLayer = {
         AES: 'AES',
         RABBIT: 'RABBIT',
         RC4: 'RC4',
-        AESQ: 'AESQ' // Post-Quantum Hybrid (AES + SHA3-512)
+        AESQ: 'AESQ'
+    },
+
+    deriveKey(password, salt = 'keep-mesh-salt-v1') {
+        if (!password) return '';
+        return CryptoJS.SHA256(password + salt).toString();
     },
 
     encrypt(data, algorithm, key) {

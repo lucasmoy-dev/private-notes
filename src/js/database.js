@@ -8,6 +8,7 @@ const Database = {
     knownPeers: new Set(),
     nodeLabel: localStorage.getItem('mesh_node_label') || 'Device-' + Math.floor(Math.random() * 1000),
     vaultName: localStorage.getItem('mesh_vault_name') || 'LocalVault',
+    _masterKey: null, // Memoria RAM solamente
 
     // Config
     storageKeyPath: 'mesh_db_v4',
@@ -20,7 +21,8 @@ const Database = {
         p2pHost: '',
         p2pPort: 443,
         p2pPath: '/',
-        p2pSecure: true
+        p2pSecure: true,
+        lockedLabels: []
     },
 
     onUpdate: null,
@@ -34,18 +36,38 @@ const Database = {
         // Load Config
         const savedConfig = localStorage.getItem(this.configKeyPath);
         if (savedConfig) {
-            try { this.config = { ...this.config, ...JSON.parse(savedConfig) }; }
+            try {
+                const parsed = JSON.parse(savedConfig);
+                if (parsed.encrypted) {
+                    this.isLocked = true;
+                    this.encryptedConfig = parsed.data;
+
+                    // Session check
+                    const sessionKey = sessionStorage.getItem('mesh_session_key');
+                    if (sessionKey) this.unlock(sessionKey, false);
+                } else {
+                    this.config = { ...this.config, ...parsed };
+                    this.isLocked = false;
+                }
+            }
             catch (e) { console.error("DB Config Corrupt", e); }
         }
 
-        // Load Data
+        if (!this.isLocked) {
+            this.loadData();
+        }
+        if (this.onUpdate) this.onUpdate();
+    },
+
+    loadData() {
         const raw = localStorage.getItem(this.storageKeyPath);
         if (raw) {
             try {
-                // Attempt Decrypt
                 let p = null;
-                if (window.CryptoLayer) {
-                    p = CryptoLayer.decrypt(raw, this.config.storageAlgo, this.config.storageKey);
+                if (window.CryptoLayer && this.config.storageAlgo !== 'NONE') {
+                    // Usamos la llave en memoria (ya hash) si existe, sino la de la config (compatibilidad)
+                    const key = this._masterKey || this.config.storageKey;
+                    p = CryptoLayer.decrypt(raw, this.config.storageAlgo, key);
                 } else {
                     p = JSON.parse(raw);
                 }
@@ -56,9 +78,51 @@ const Database = {
                     if (p.peers) this.knownPeers = new Set(p.peers);
                 }
             } catch (e) {
-                console.error("Database: Storage corruption or Decrypt Failure.", e);
+                console.error("Database: Decrypt Failure.", e);
             }
         }
+    },
+
+    unlock(passwordOrKey, isRawPassword = true) {
+        if (!this.encryptedConfig) return true;
+        try {
+            // Si es la contraseña del usuario, derivamos la llave. Si ya es una llave de sesión, la usamos directamente.
+            const key = isRawPassword ? CryptoLayer.deriveKey(passwordOrKey) : passwordOrKey;
+            const decrypted = CryptoLayer.decrypt(this.encryptedConfig, 'AES', key);
+
+            if (decrypted) {
+                this.config = decrypted;
+                this._masterKey = key;
+                this.isLocked = false;
+                sessionStorage.setItem('mesh_session_key', key);
+                this.loadData();
+                if (this.onUpdate) this.onUpdate();
+                return true;
+            }
+        } catch (e) { console.error("Unlock failed", e); }
+        return false;
+    },
+
+    lock(passwordOrKey, isRawPassword = true) {
+        if (!passwordOrKey) {
+            this.isLocked = false;
+            this._masterKey = null;
+            sessionStorage.removeItem('mesh_session_key');
+            localStorage.setItem(this.configKeyPath, JSON.stringify(this.config));
+            return;
+        }
+
+        const key = isRawPassword ? CryptoLayer.deriveKey(passwordOrKey) : passwordOrKey;
+        const encrypted = CryptoLayer.encrypt(this.config, 'AES', key);
+
+        localStorage.setItem(this.configKeyPath, JSON.stringify({ encrypted: true, data: encrypted }));
+
+        // Al establecer la contraseña, nos quedamos "desbloqueados" en memoria
+        this.isLocked = false;
+        this._masterKey = key;
+        this.encryptedConfig = encrypted;
+        sessionStorage.setItem('mesh_session_key', key);
+
         if (this.onUpdate) this.onUpdate();
     },
 
@@ -73,7 +137,8 @@ const Database = {
 
         // Encrypt if needed
         if (window.CryptoLayer && this.config.storageAlgo !== 'NONE') {
-            dataToStore = CryptoLayer.encrypt(payload, this.config.storageAlgo, this.config.storageKey);
+            const key = this._masterKey || this.config.storageKey;
+            dataToStore = CryptoLayer.encrypt(payload, this.config.storageAlgo, key);
         }
 
         localStorage.setItem(this.storageKeyPath, dataToStore);
@@ -82,8 +147,13 @@ const Database = {
 
     configure(newConfig) {
         this.config = { ...this.config, ...newConfig };
-        localStorage.setItem(this.configKeyPath, JSON.stringify(this.config));
+        if (this._masterKey || this.isLocked) {
+            this.lock(this._masterKey, false);
+        } else {
+            localStorage.setItem(this.configKeyPath, JSON.stringify(this.config));
+        }
         this.save();
+        if (this.onUpdate) this.onUpdate();
     },
 
     setNodeLabel(label) {
