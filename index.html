@@ -647,7 +647,7 @@
             const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
             const [tempLabel, setTempLabel] = useState(localLabel);
             const [showAdvancedSync, setShowAdvancedSync] = useState(false);
-            const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
+            const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'AESQ', storageKey: '', syncAlgo: 'AESQ', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
             const [resetPhrase, setResetPhrase] = useState('');
 
             useEffect(() => {
@@ -655,7 +655,7 @@
                     setTempName(vaultName);
                     setTempPass(localStorage.getItem('mesh_vault_pass') || '');
                     setTempLabel(localLabel);
-                    setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
+                    setPendingEncConfig(Database.config || { storageAlgo: 'AESQ', storageKey: '', syncAlgo: 'AESQ', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
                 }
             }, [isOpen, vaultName, localLabel]);
             if (!isOpen) return null;
@@ -716,7 +716,7 @@
                                                         setPendingEncConfig({ ...pendingEncConfig, storageAlgo: algo, syncAlgo: algo, syncKey: algo === 'NONE' ? '' : tempPass, storageKey: algo === 'NONE' ? '' : tempPass });
                                                     }}>
                                                     <option value="NONE">None</option>
-                                                    <option value="AESQ">AES-Q</option>
+                                                    <option value="AESQ">AES-Q (Post-Quantum)</option>
                                                     <option value="AES">AES-256</option>
                                                     <option value="RABBIT">Rabbit</option>
                                                 </select>
@@ -808,14 +808,24 @@
                                         )}
                                     </div>
                                     <div className="p-4 bg-indigo-500/5 rounded-[1.5rem] border border-indigo-500/10 space-y-2">
-                                        <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest pl-1">Vault Master Lock</label>
-                                        <p className="text-[10px] text-gray-400 leading-relaxed px-1">Requires your Master Password before opening the app or viewing locked notes.</p>
-                                        <button onClick={() => {
-                                            const pass = prompt("Enter a Master Password (leave empty to disable):");
-                                            if (pass !== null) { Database.lock(pass); alert(pass ? "Vault Lock Active!" : "Vault Lock Disabled."); }
-                                        }} className="w-full py-2 bg-indigo-600/20 text-indigo-400 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-600/30 transition-all">
-                                            {(Database.isLocked || Database.encryptedConfig) ? 'Change Master Lock' : 'Enable Master Lock'}
-                                        </button>
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest">Vault Master Lock</label>
+                                            <button
+                                                onClick={() => {
+                                                    if (!tempPass && !(Database.isLocked || Database.encryptedConfig)) {
+                                                        alert("Please set a Universal Password first to enable the Master Lock.");
+                                                        return;
+                                                    }
+                                                    const isEnabling = !(Database.isLocked || Database.encryptedConfig);
+                                                    Database.lock(isEnabling ? tempPass : '');
+                                                    alert(isEnabling ? "Master Lock Updated." : "Master Lock Disabled.");
+                                                    setNotes(vals => [...vals]); // Trigger re-render
+                                                }}
+                                                className={`w-12 h-6 rounded-full relative transition-all ${(Database.isLocked || Database.encryptedConfig) ? 'bg-indigo-600' : 'bg-gray-600'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${(Database.isLocked || Database.encryptedConfig) ? 'left-7' : 'left-1'}`} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
