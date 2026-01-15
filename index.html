@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keep Mesh - Private Notes</title>
+
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script src="database.js"></script>
+    <script src="mesh-engine.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #202124;
+            color: #e8eaed;
+            transition: all 0.3s ease;
+        }
+
+        /* Light Theme override */
+        body.light-theme {
+            background: #ffffff;
+            color: #202124;
+        }
+
+        /* Note Cards */
+        .note-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            will-change: transform, box-shadow;
+        }
+
+        body.light-theme .note-card {
+            border: 1px solid #e0e0e0;
+        }
+
+        .note-card:hover {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 2px 6px 2px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        body.light-theme .note-card:hover {
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        }
+
+        /* Colors - Keep Style */
+        .note-color-default {
+            background: transparent;
+        }
+
+        .note-color-red {
+            background: #5c2b29;
+            color: #f28b82;
+        }
+
+        .note-color-orange {
+            background: #614a19;
+            color: #fbbc04;
+        }
+
+        .note-color-yellow {
+            background: #635d19;
+            color: #fff475;
+        }
+
+        .note-color-green {
+            background: #345920;
+            color: #ccff90;
+        }
+
+        .note-color-teal {
+            background: #16504b;
+            color: #a7ffeb;
+        }
+
+        .note-color-blue {
+            background: #2d555e;
+            color: #cbf0f8;
+        }
+
+        .note-color-darkblue {
+            background: #1e3a5f;
+            color: #aecbfa;
+        }
+
+        .note-color-purple {
+            background: #42275e;
+            color: #d7aefb;
+        }
+
+        .note-color-pink {
+            background: #5b2245;
+            color: #fdcfe8;
+        }
+
+        .note-color-brown {
+            background: #442f19;
+            color: #e6c9a8;
+        }
+
+        .note-color-gray {
+            background: #3c3f43;
+            color: #e8eaed;
+        }
+
+        /* Light Mode Colors */
+        body.light-theme .note-color-red {
+            background: #f28b82;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-orange {
+            background: #fbbc04;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-yellow {
+            background: #fff475;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-green {
+            background: #ccff90;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-teal {
+            background: #a7ffeb;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-blue {
+            background: #cbf0f8;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-darkblue {
+            background: #aecbfa;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-purple {
+            background: #d7aefb;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-pink {
+            background: #fdcfe8;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-brown {
+            background: #e6c9a8;
+            color: #202124;
+        }
+
+        body.light-theme .note-color-gray {
+            background: #e8eaed;
+            color: #202124;
+        }
+
+        .masonry {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-auto-rows: 10px;
+            gap: 16px;
+        }
+
+        .animate-pop {
+            animation: pop 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes pop {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        /** UI HELPERS */
+        const Icon = ({ name, size = 20, className = "", onClick }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} className={className}
+                style={{ width: size, height: size, cursor: onClick ? 'pointer' : 'default' }}
+                onClick={onClick} />;
+        };
+
+        const NOTE_COLORS = [
+            { id: 'default', label: 'None' }, { id: 'red', label: 'Red' }, { id: 'orange', label: 'Orange' },
+            { id: 'yellow', label: 'Yellow' }, { id: 'green', label: 'Green' }, { id: 'teal', label: 'Teal' },
+            { id: 'blue', label: 'Blue' }, { id: 'darkblue', label: 'Dark Blue' }, { id: 'purple', label: 'Purple' },
+            { id: 'pink', label: 'Pink' }, { id: 'brown', label: 'Brown' }, { id: 'gray', label: 'Gray' }
+        ];
+
+        /** NOTE CARD */
+        const NoteCard = ({ note, onEdit, onDelete, onTogglePin }) => {
+            const spanRef = useRef(15);
+            useEffect(() => {
+                const contentLen = (note.title?.length || 0) + (note.content?.length || 0);
+                spanRef.current = Math.min(Math.ceil(contentLen / 20) + 10, 60);
+            }, [note]);
+
+            return (
+                <div
+                    className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-3 cursor-pointer break-inside-avoid`}
+                    style={{ gridRowEnd: `span ${spanRef.current}` }}
+                    onClick={() => onEdit(note)}
+                >
+                    <div className="flex justify-between items-start">
+                        {note.title && <h3 className="font-bold text-lg leading-snug w-full pr-6">{note.title}</h3>}
+                        <button
+                            className={`absolute top-3 right-3 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/10`}
+                            onClick={(e) => { e.stopPropagation(); onTogglePin(note); }}
+                        >
+                            <Icon name="pin" size={16} className={note.pinned ? "fill-current text-indigo-400" : "text-gray-400"} />
+                        </button>
+                    </div>
+                    {note.content && <p className="text-sm whitespace-pre-wrap leading-relaxed">{note.content}</p>}
+
+                    <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between">
+                        <div className="flex gap-1">
+                            <button className="p-1.5 hover:bg-black/10 rounded-full text-gray-400" onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}>
+                                <Icon name="trash-2" size={15} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        /** MAIN APP */
+        const App = () => {
+            const [notes, setNotes] = useState([]);
+            const [isCreating, setIsCreating] = useState(false);
+            const [editingNote, setEditingNote] = useState(null);
+            const [newTitle, setNewTitle] = useState('');
+            const [newContent, setNewContent] = useState('');
+            const [newColor, setNewColor] = useState('default');
+            const [isSyncActive, setIsSyncActive] = useState(!!localStorage.getItem('mesh_active'));
+            const [vaultName, setVaultName] = useState(Database.vaultName);
+            const [peers, setPeers] = useState([]);
+            const [showSettings, setShowSettings] = useState(false);
+            const [isLightMode, setIsLightMode] = useState(localStorage.getItem('theme') === 'light');
+
+            // --- INIT ---
+            useEffect(() => {
+                Database.init(vaultName, () => setNotes(Database.getAll()));
+                if (isSyncActive) initMesh(vaultName);
+                applyTheme(isLightMode);
+            }, []);
+
+            const initMesh = (name) => {
+                Hub.initialize(name, () => {
+                    setPeers(Array.from(Hub.conns.entries()).map(([id, d]) => ({ id, label: d.label })));
+                });
+            };
+
+            const applyTheme = (light) => {
+                document.body.className = light ? 'light-theme' : '';
+            }
+
+            const toggleTheme = () => {
+                const next = !isLightMode;
+                setIsLightMode(next);
+                localStorage.setItem('theme', next ? 'light' : 'dark');
+                applyTheme(next);
+            };
+
+            const toggleSync = () => {
+                const nextState = !isSyncActive;
+                setIsSyncActive(nextState);
+                if (nextState) {
+                    localStorage.setItem('mesh_active', 'true');
+                    initMesh(vaultName);
+                } else {
+                    localStorage.removeItem('mesh_active');
+                    if (Hub.peer) Hub.peer.destroy();
+                    setPeers([]);
+                }
+            };
+
+            const createNote = () => {
+                if (!newTitle.trim() && !newContent.trim()) { setIsCreating(false); return; }
+                const id = Date.now();
+                Database.upsert(id, { title: newTitle, content: newContent, color: newColor, pinned: false });
+                setNewTitle(''); setNewContent(''); setNewColor('default'); setIsCreating(false);
+                if (isSyncActive) Hub.broadcast();
+            };
+
+            const deleteNote = (id) => { Database.delete(id); if (isSyncActive) Hub.broadcast(); };
+
+            const togglePin = (note) => {
+                Database.upsert(note.id, { ...note, pinned: !note.pinned });
+                if (isSyncActive) Hub.broadcast();
+            };
+
+            const saveEdit = () => {
+                if (!editingNote) return;
+                Database.upsert(editingNote.id, { ...editingNote });
+                setEditingNote(null);
+                if (isSyncActive) Hub.broadcast();
+            };
+
+            const pinned = useMemo(() => notes.filter(n => n.pinned), [notes]);
+            const others = useMemo(() => notes.filter(n => !n.pinned), [notes]);
+
+            return (
+                <div className="min-h-screen flex flex-col pb-20">
+                    {/* Header */}
+                    <header className="h-16 px-6 flex items-center justify-between border-b border-white/5 sticky top-0 z-40 glass backdrop-blur-md">
+                        <div className="flex items-center gap-3 select-none">
+                            <div className="w-9 h-9 bg-yellow-400 rounded-lg flex items-center justify-center text-yellow-900 shadow-lg shadow-yellow-500/20">
+                                <Icon name="sticky-note" size={20} />
+                            </div>
+                            <h1 className="text-xl font-medium tracking-tight hidden sm:block opacity-90">Keep Mesh</h1>
+                        </div>
+
+                        <div className="flex-1 max-w-xl mx-4 sm:mx-8">
+                            <div className="bg-gray-500/10 focus-within:bg-white/10 focus-within:shadow-md rounded-lg flex items-center px-4 h-11 transition-all">
+                                <Icon name="search" size={18} className="text-gray-400" />
+                                <input type="text" placeholder="Search" className="bg-transparent border-none outline-none flex-1 px-4 text-sm h-full placeholder:text-gray-500" />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            {isSyncActive && (
+                                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-[10px] font-bold uppercase tracking-widest">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    Sync On
+                                </div>
+                            )}
+                            <button className="p-2.5 hover:bg-black/10 rounded-full transition-colors" onClick={() => setShowSettings(true)}>
+                                <Icon name="settings" size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-8 space-y-12">
+                        {/* Creator */}
+                        <div className="max-w-[600px] mx-auto w-full relative z-10">
+                            <div
+                                className={`glass rounded-xl shadow-lg border ${isLightMode ? 'border-gray-200' : 'border-white/10'} overflow-hidden transition-all duration-300 ${isCreating ? 'active-creator ring-1 ring-black/5' : ''}`}
+                                onClick={() => !isCreating && setIsCreating(true)}
+                            >
+                                {isCreating ? (
+                                    <div className="p-4 space-y-3 animate-pop">
+                                        <input
+                                            autoFocus type="text" placeholder="Title"
+                                            className="w-full bg-transparent border-none outline-none font-medium text-lg placeholder:font-medium placeholder:text-gray-500"
+                                            value={newTitle} onChange={e => setNewTitle(e.target.value)}
+                                        />
+                                        <textarea
+                                            placeholder="Take a note..."
+                                            className="w-full bg-transparent border-none outline-none text-sm min-h-[80px] resize-none placeholder:text-gray-500"
+                                            value={newContent} onChange={e => setNewContent(e.target.value)}
+                                        />
+                                        <div className="flex items-center justify-between pt-2">
+                                            <div className="flex gap-1.5">
+                                                {NOTE_COLORS.slice(0, 5).map(c => (
+                                                    <button key={c.id} onClick={() => setNewColor(c.id)} className={`w-5 h-5 rounded-full border border-black/10 note-color-${c.id} ${newColor === c.id ? 'ring-2 ring-indigo-500' : ''}`} />
+                                                ))}
+                                            </div>
+                                            <button onClick={createNote} className="text-sm font-medium hover:bg-black/5 px-5 py-2 rounded-md transition-colors">Close</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="px-5 py-3.5 flex items-center justify-between cursor-text opacity-70">
+                                        <span className="font-medium text-sm">Take a note...</span>
+                                        <div className="flex gap-4">
+                                            <Icon name="check-square" size={18} />
+                                            <Icon name="image" size={18} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Note Lists */}
+                        <div className="space-y-12 pb-20">
+                            {pinned.length > 0 && (
+                                <section className="space-y-4">
+                                    <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-2">Pinned</small>
+                                    <div className="masonry">
+                                        {pinned.map(n => <NoteCard key={n.id} note={n} onEdit={setEditingNote} onDelete={deleteNote} onTogglePin={togglePin} />)}
+                                    </div>
+                                </section>
+                            )}
+
+                            <section className="space-y-4">
+                                {pinned.length > 0 && <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-2">Others</small>}
+                                <div className="masonry">
+                                    {others.map(n => <NoteCard key={n.id} note={n} onEdit={setEditingNote} onDelete={deleteNote} onTogglePin={togglePin} />)}
+                                </div>
+                                {notes.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-20 opacity-30 select-none">
+                                        <Icon name="layout-template" size={120} strokeWidth={0.5} />
+                                        <p className="mt-6 text-xl font-medium">Notes you add appear here</p>
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+                    </main>
+
+                    {/* Edit Modal */}
+                    {editingNote && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => saveEdit()}>
+                            <div className={`w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-pop note-color-${editingNote.color} border border-white/5 relative`} onClick={e => e.stopPropagation()}>
+                                <div className="p-6 space-y-4">
+                                    <input type="text" value={editingNote.title} onChange={e => setEditingNote({ ...editingNote, title: e.target.value })} className="w-full bg-transparent outline-none text-xl font-bold placeholder:text-gray-500/50" placeholder="Title" />
+                                    <textarea value={editingNote.content} onChange={e => setEditingNote({ ...editingNote, content: e.target.value })} className="w-full bg-transparent outline-none min-h-[250px] resize-none text-base placeholder:text-gray-500/50" placeholder="Note" />
+                                </div>
+                                <div className="px-4 py-3 bg-black/5 flex justify-between items-center">
+                                    <div className="flex gap-2">
+                                        {NOTE_COLORS.slice(0, 8).map(c => (
+                                            <button key={c.id} onClick={() => setEditingNote({ ...editingNote, color: c.id })} className={`w-6 h-6 rounded-full border border-black/10 note-color-${c.id} ${editingNote.color === c.id ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}`} />
+                                        ))}
+                                    </div>
+                                    <button onClick={saveEdit} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow-lg transition-all">Done</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Settings Modal */}
+                    {showSettings && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={() => setShowSettings(false)}>
+                            <div className="glass max-w-md w-full rounded-[2rem] border border-white/10 shadow-3xl animate-pop overflow-hidden" onClick={e => e.stopPropagation()}>
+                                <div className="p-8 space-y-8">
+                                    <h2 className="text-2xl font-bold text-center">Settings</h2>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white/5 rounded-full"><Icon name={isLightMode ? "sun" : "moon"} /></div>
+                                                <span className="font-medium text-sm">Appearance</span>
+                                            </div>
+                                            <button onClick={toggleTheme} className={`w-12 h-7 rounded-full transition-all relative ${isLightMode ? 'bg-indigo-500' : 'bg-gray-600'}`}>
+                                                <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-sm ${isLightMode ? 'left-6' : 'left-1'}`} />
+                                            </button>
+                                        </div>
+
+                                        <div className="p-5 bg-white/5 rounded-3xl border border-white/5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 bg-white/5 rounded-full"><Icon name="refresh-cw" className={isSyncActive ? 'animate-spin-slow' : ''} /></div>
+                                                    <div>
+                                                        <div className="font-medium text-sm">P2P Sync</div>
+                                                        <div className="text-[10px] text-gray-500 font-medium">{isSyncActive ? 'ACTIVE' : 'OFFLINE'}</div>
+                                                    </div>
+                                                </div>
+                                                <button onClick={toggleSync} className={`w-12 h-7 rounded-full transition-all relative ${isSyncActive ? 'bg-green-500' : 'bg-gray-600'}`}>
+                                                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-sm ${isSyncActive ? 'left-6' : 'left-1'}`} />
+                                                </button>
+                                            </div>
+
+                                            {isSyncActive && (
+                                                <div className="pt-2 border-t border-white/5 space-y-3 animate-pop">
+                                                    <div className="space-y-1">
+                                                        <label className="text-[10px] uppercase font-bold text-gray-500 pl-1">Vault ID</label>
+                                                        <input type="text" value={vaultName} onChange={e => setVaultName(e.target.value)} className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm font-mono outline-none focus:border-indigo-500 transition-colors" />
+                                                    </div>
+                                                    <div className="p-3 bg-black/20 rounded-xl space-y-2">
+                                                        <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                                                            <span>Network Nodes</span>
+                                                            <span className="bg-white/10 px-2 py-0.5 rounded text-white">{peers.length + 1}</span>
+                                                        </div>
+                                                        <div className="space-y-1 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                                                            <div className="flex items-center justify-between text-xs p-2 bg-green-500/10 rounded-lg text-green-400 border border-green-500/20">
+                                                                <span className="font-bold">YOU ({Database.nodeLabel})</span>
+                                                                <div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_5px_currentColor]"></div>
+                                                            </div>
+                                                            {peers.map(p => (
+                                                                <div key={p.id} className="flex items-center justify-between text-xs p-2 bg-white/5 rounded-lg text-gray-300">
+                                                                    <span>{p.label}</span>
+                                                                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
