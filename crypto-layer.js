@@ -1,7 +1,6 @@
 /**
  * 🔐 CRYPTO LAYER v1
  * Handles encryption/decryption for Storage and Network.
- * Dependencies: CryptoJS
  */
 
 const CryptoLayer = {
@@ -12,13 +11,6 @@ const CryptoLayer = {
         RC4: 'RC4'
     },
 
-    /**
-     * Encrypts data based on the selected algorithm and key.
-     * @param {any} data - The data to encrypt (will be JSON stringified).
-     * @param {string} algorithm - One of CryptoLayer.ALGORITHMS.
-     * @param {string} key - The secret key/passphrase.
-     * @returns {string} - The encrypted string (or JSON string if NONE).
-     */
     encrypt(data, algorithm, key) {
         if (!data) return null;
         const payload = JSON.stringify(data);
@@ -49,13 +41,6 @@ const CryptoLayer = {
         }
     },
 
-    /**
-     * Decrypts encrypted string back to original data.
-     * @param {string} encrypted - The encrypted string.
-     * @param {string} algorithm - One of CryptoLayer.ALGORITHMS.
-     * @param {string} key - The secret key/passphrase.
-     * @returns {any} - The parsed JSON object.
-     */
     decrypt(encrypted, algorithm, key) {
         if (!encrypted) return null;
 
@@ -64,7 +49,6 @@ const CryptoLayer = {
         }
 
         if (!key) {
-            // Try parsing as plain JSON in case it wasn't actually encrypted
             try { return JSON.parse(encrypted); } catch (e) { return null; }
         }
 
@@ -94,3 +78,5 @@ const CryptoLayer = {
         return null;
     }
 };
+
+window.CryptoLayer = CryptoLayer;

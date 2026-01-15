@@ -1,6 +1,5 @@
 /**
- * 🕸️ MESH ENGINE v13 - React Ready (Encrypted)
- * Now transmits node labels/metadata along with the data.
+ * 🕸️ MESH ENGINE - P2P Sync Logic
  */
 
 const Hub = {
@@ -120,3 +119,5 @@ const Hub = {
         this.conns.forEach(node => node.conn.open && node.conn.send(msg));
     }
 };
+
+window.Hub = Hub;

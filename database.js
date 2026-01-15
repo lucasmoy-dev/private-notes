@@ -1,6 +1,5 @@
 /**
  * 🗄️ DATABASE ENGINE v5 - Encrypted
- * Pure Logic & CRDT + Crypto. 
  */
 
 const Database = {
@@ -80,7 +79,7 @@ const Database = {
     configure(newConfig) {
         this.config = { ...this.config, ...newConfig };
         localStorage.setItem(this.configKeyPath, JSON.stringify(this.config));
-        this.save(); // Re-save data with new encryption settings
+        this.save();
     },
 
     setNodeLabel(label) {
@@ -154,3 +153,5 @@ const Database = {
         };
     }
 };
+
+window.Database = Database;

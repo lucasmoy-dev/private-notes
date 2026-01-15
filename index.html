@@ -3,43 +3,52 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keep Mesh - Private Notes</title>
-    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Keep Mesh - Private Decentralized Notes</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#202124">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
 
     <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <script src="database.js"></script>
-    <script src="mesh-engine.js"></script>
-    <script src="crypto-layer.js"></script>
+    <!-- Local Components/Logic -->
+    <script src="./crypto-layer.js"></script>
+    <script src="./database.js"></script>
+    <script src="./mesh-engine.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+        :root {
+            --bg-dark: #202124;
+            --bg-light: #ffffff;
+            --text-dark: #e8eaed;
+            --text-light: #202124;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background: #202124;
-            color: #e8eaed;
+            background: var(--bg-dark);
+            color: var(--text-dark);
             transition: all 0.3s ease;
             overscroll-behavior-y: none;
+            margin: 0;
         }
 
-        /* Light Theme override */
         body.light-theme {
-            background: #ffffff;
-            color: #202124;
+            background: var(--bg-light);
+            color: var(--text-light);
         }
 
-        /* Note Cards */
         .note-card {
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -47,7 +56,7 @@
         }
 
         body.light-theme .note-card {
-            border: 1px solid #e0e0e0;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .note-card:hover {
@@ -59,7 +68,7 @@
             box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
         }
 
-        /* Colors - Keep Style */
+        /* Note Colors */
         .note-color-default {
             background: transparent;
         }
@@ -119,7 +128,6 @@
             color: #e8eaed;
         }
 
-        /* Light Mode Colors */
         body.light-theme .note-color-red {
             background: #f28b82;
             color: #202124;
@@ -198,7 +206,6 @@
             }
         }
 
-        /* Custom Scrollbar for dropdowns */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
@@ -208,12 +215,19 @@
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(128, 128, 128, 0.2);
             border-radius: 4px;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .glass {
+            background: rgba(32, 33, 36, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        body.light-theme .glass {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -224,43 +238,8 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => {
-                        console.log('SW registered');
+        // --- UI COMPONENTS ---
 
-                        // Check for updates on load
-                        reg.update();
-
-                        // Detect if a new service worker is found
-                        reg.onupdatefound = () => {
-                            const installingWorker = reg.installing;
-                            installingWorker.onstatechange = () => {
-                                if (installingWorker.state === 'installed') {
-                                    if (navigator.serviceWorker.controller) {
-                                        // New version available! 
-                                        // SW will activate automatically because of self.skipWaiting()
-                                        console.log('New version found, updating...');
-                                    }
-                                }
-                            };
-                        };
-                    })
-                    .catch(err => console.log('SW failed', err));
-
-                // Reload the page when the new service worker takes control
-                let refreshing = false;
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
-                        refreshing = true;
-                        window.location.reload();
-                    }
-                });
-            });
-        }
-
-        /** UI HELPERS */
         const Icon = ({ name, size = 20, className = "", onClick, style = {} }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} className={className}
@@ -268,50 +247,29 @@
                 onClick={onClick} />;
         };
 
-        const NOTE_COLORS = [
-            { id: 'default', label: 'Default', bg: 'transparent' },
-            { id: 'red', label: 'Red', bg: '#5c2b29' },
-            { id: 'orange', label: 'Orange', bg: '#614a19' },
-            { id: 'yellow', label: 'Yellow', bg: '#635d19' },
-            { id: 'green', label: 'Green', bg: '#345920' },
-            { id: 'teal', label: 'Teal', bg: '#16504b' },
-            { id: 'blue', label: 'Blue', bg: '#2d555e' },
-            { id: 'darkblue', label: 'Dark Blue', bg: '#1e3a5f' },
-            { id: 'purple', label: 'Purple', bg: '#42275e' },
-            { id: 'pink', label: 'Pink', bg: '#5b2245' },
-            { id: 'brown', label: 'Brown', bg: '#442f19' },
-            { id: 'gray', label: 'Gray', bg: '#3c3f43' }
-        ];
-
-        /** NOTE CARD */
         const NoteCard = ({ note, onEdit, onDelete, onTogglePin, onToggleCheck }) => {
             const spanRef = useRef(15);
-
             useEffect(() => {
                 let contentLen = (note.title?.length || 0);
                 if (note.type === 'checklist' && note.items) contentLen += note.items.length * 30;
                 else contentLen += (note.content?.length || 0);
-                // Reduced buffer to minimize bottom space
                 const calculated = Math.ceil(contentLen / 20) + 4;
                 spanRef.current = Math.max(calculated, 10);
             }, [note]);
 
-            const visibleItems = note.type === 'checklist' ? (note.items || []).slice(0, 8) : [];
-            const remaining = note.type === 'checklist' ? Math.max(0, (note.items || []).length - 8) : 0;
+            const visibleItems = (note.items || []).slice(0, 8);
+            const remaining = Math.max(0, (note.items || []).length - 8);
 
             return (
-                <div
-                    className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-2 cursor-pointer break-inside-avoid shadow-sm`}
+                <div className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-2 cursor-pointer break-inside-avoid shadow-sm`}
                     style={{ gridRowEnd: `span ${spanRef.current}` }}
-                    onClick={() => onEdit(note)}
-                >
+                    onClick={() => onEdit(note)}>
                     <div className="flex justify-between items-start">
                         {note.title && <h3 className="font-bold text-lg leading-snug w-full pr-6">{note.title}</h3>}
-                        <button className={`absolute top-3 right-3 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/10 z-10`} onClick={(e) => { e.stopPropagation(); onTogglePin(note); }}>
+                        <button className="absolute top-3 right-3 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity" onClick={e => { e.stopPropagation(); onTogglePin(note); }}>
                             <Icon name="pin" size={16} className={note.pinned ? "fill-current text-indigo-400" : "text-gray-400"} />
                         </button>
                     </div>
-
                     <div className="text-sm leading-relaxed">
                         {note.type === 'checklist' ? (
                             <div className="space-y-1">
@@ -320,682 +278,254 @@
                                         <div className={`mt-0.5 min-w-[14px] h-[14px] border rounded-sm flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-current border-transparent opacity-60' : 'border-current opacity-40'}`} onClick={() => onToggleCheck(note.id, idx)}>
                                             {item.checked && <Icon name="check" size={10} className="stroke-[4]" />}
                                         </div>
-                                        <span className={`${item.checked ? 'line-through opacity-50' : ''}`}>{item.text}</span>
+                                        <span className={item.checked ? 'line-through opacity-50' : ''}>{item.text}</span>
                                     </div>
                                 ))}
                                 {remaining > 0 && <div className="text-xs opacity-50 pl-6">+ {remaining} more items</div>}
                             </div>
-                        ) : (
-                            <p className="whitespace-pre-wrap">{note.content}</p>
-                        )}
+                        ) : <p className="whitespace-pre-wrap">{note.content}</p>}
                     </div>
-
-                    {(note.labels && note.labels.length > 0) && (
+                    {note.labels?.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
-                            {note.labels.map(L => (
-                                <span key={L} className="px-2 py-0.5 bg-black/5 dark:bg-black/20 rounded-full text-[10px] font-bold uppercase tracking-wider opacity-60">{L}</span>
-                            ))}
+                            {note.labels.map(L => <span key={L} className="px-2 py-0.5 bg-black/5 dark:bg-black/20 rounded-full text-[10px] font-bold uppercase tracking-wider opacity-60">{L}</span>)}
                         </div>
                     )}
                 </div>
             );
         };
 
-        const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, onAddLabel }) => {
+        const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, onAddLabel, deferredPrompt, onInstall }) => {
             const [newLabel, setNewLabel] = useState('');
             return (
                 <React.Fragment>
-                    <div className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
-                    <div className={`fixed top-0 left-0 bottom-0 w-72 ${isLightMode ? 'bg-white' : 'bg-[#202124]'} z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col`}>
+                    <div className={`fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
+                    <div className={`fixed top-0 left-0 bottom-0 w-72 ${isLightMode ? 'bg-white' : 'bg-[#202124]'} z-[101] transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col`}>
                         <div className="p-6 border-b border-white/5 flex items-center justify-between">
                             <span className="font-bold text-xl tracking-tight">Menú</span>
                             <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full"><Icon name="x" size={20} /></button>
                         </div>
                         <div className="flex-1 overflow-y-auto py-4">
                             <div className={`px-6 py-3 flex items-center gap-4 cursor-pointer hover:bg-black/5 border-l-4 ${!selectedLabel ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(null); onClose(); }}>
-                                <Icon name="lightbulb" size={20} />
-                                <span className="font-medium">Notes</span>
+                                <Icon name="lightbulb" size={20} /> <span className="font-medium">Notes</span>
                             </div>
                             {labels.map(l => (
                                 <div key={l} className={`px-6 py-3 flex items-center gap-4 cursor-pointer hover:bg-black/5 border-l-4 ${selectedLabel === l ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(l); onClose(); }}>
-                                    <Icon name="tag" size={20} />
-                                    <span className="font-medium truncate">{l}</span>
+                                    <Icon name="tag" size={20} /> <span className="font-medium truncate">{l}</span>
                                 </div>
                             ))}
                             <div className="px-6 py-3 border-t border-white/10 mt-2">
-                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2 font-medium">Create new label</div>
-                                <div className="flex items-center gap-2">
-                                    <input className="bg-transparent border-b border-white/10 w-full py-1 text-sm outline-none focus:border-indigo-500" placeholder="Label name" value={newLabel} onChange={e => setNewLabel(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newLabel.trim()) { onAddLabel(newLabel.trim()); setNewLabel(''); } }} />
+                                <div className="text-xs text-gray-500 mb-2 font-bold uppercase opacity-60">Labels</div>
+                                <div className="flex gap-2">
+                                    <input className="bg-transparent border-b border-white/10 w-full py-1 text-sm outline-none focus:border-indigo-500" placeholder="New label" value={newLabel} onChange={e => setNewLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newLabel.trim()) { onAddLabel(newLabel.trim()); setNewLabel(''); } }} />
                                     <button onClick={() => { if (newLabel.trim()) { onAddLabel(newLabel.trim()); setNewLabel(''); } }} className="p-1 hover:bg-black/10 rounded-full"><Icon name="plus" size={18} /></button>
                                 </div>
                             </div>
                         </div>
+                        {deferredPrompt && (
+                            <div className="p-6 border-t border-white/5 bg-indigo-500/5">
+                                <button onClick={() => { onInstall(); onClose(); }} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all">
+                                    <Icon name="download" size={18} /> <span>Install App</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </React.Fragment>
             );
         };
 
-        /** MAIN APP */
-        const App = () => {
-            const [notes, setNotes] = useState([]);
-            const [displayedNotes, setDisplayedNotes] = useState([]);
-            const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-            // UI State
-            const [isCreating, setIsCreating] = useState(false);
-            const [editingNote, setEditingNote] = useState(null);
-            const [sidebarOpen, setSidebarOpen] = useState(false);
-            const [showColorPicker, setShowColorPicker] = useState(false);
-
-            // Note State
-            const [title, setTitle] = useState('');
-            const [content, setContent] = useState('');
-            const [items, setItems] = useState([]);
-            const [itemText, setItemText] = useState('');
-            const [type, setType] = useState('text');
-            const [color, setColor] = useState('default');
-            const [labels, setLabels] = useState([]);
-            const [manualLabels, setManualLabels] = useState([]); // Labels added via sidebar
-
-            // Sync & settings
-            const [isSyncActive, setIsSyncActive] = useState(!!localStorage.getItem('mesh_active'));
-            const [vaultName, setVaultName] = useState(Database.vaultName);
-            const [vaultPass, setVaultPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
-            const [peers, setPeers] = useState([]);
-            const [showSettings, setShowSettings] = useState(false);
-            const [isLightMode, setIsLightMode] = useState(localStorage.getItem('theme') === 'light');
-            const [selectedLabel, setSelectedLabel] = useState(null);
-            const [searchQuery, setSearchQuery] = useState('');
+        const SettingsModal = ({ isOpen, onClose, isLightMode, toggleTheme, isSyncActive, toggleSync, vaultName, setVaultName, peers, localLabel, onExport, onImport }) => {
+            const [view, setView] = useState('MAIN');
+            const [tempName, setTempName] = useState(vaultName);
+            const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
+            const [tempLabel, setTempLabel] = useState(localLabel);
+            const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '' });
+            const [resetPhrase, setResetPhrase] = useState('');
 
             useEffect(() => {
-                const loaded = Database.getAll();
-                setNotes(loaded);
-                // Check local storage for manually created labels
-                const mls = JSON.parse(localStorage.getItem('mesh_manual_labels') || '[]');
-                setManualLabels(mls);
-
-                Database.init(vaultName, () => setNotes(Database.getAll()));
-                if (isSyncActive) initMesh(vaultName, vaultPass);
-                applyTheme(isLightMode);
-                window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); setDeferredPrompt(e); });
-            }, []);
-
-            useEffect(() => {
-                let filtered = notes;
-                if (selectedLabel) filtered = filtered.filter(n => (n.labels || []).includes(selectedLabel));
-                if (searchQuery) {
-                    const q = searchQuery.toLowerCase();
-                    filtered = filtered.filter(n =>
-                        (n.title && n.title.toLowerCase().includes(q)) ||
-                        (n.content && n.content.toLowerCase().includes(q)) ||
-                        (n.items && n.items.some(i => i.text.toLowerCase().includes(q)))
-                    );
+                if (isOpen) {
+                    setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '' });
                 }
-                setDisplayedNotes(filtered);
-            }, [notes, selectedLabel, searchQuery]);
+            }, [isOpen]);
 
-            const allLabels = useMemo(() => {
-                const s = new Set(manualLabels);
-                notes.forEach(n => (n.labels || []).forEach(l => s.add(l)));
-                return Array.from(s).sort();
-            }, [notes, manualLabels]);
+            if (!isOpen) return null;
 
-            const initMesh = (name, pass) => {
-                Hub.initialize(name, pass, () => setPeers(Array.from(Hub.conns.entries()).map(([id, d]) => ({ id, label: d.label }))));
-            };
-            const applyTheme = (light) => { document.body.className = light ? 'light-theme' : ''; };
-            const toggleTheme = () => { setIsLightMode(!isLightMode); localStorage.setItem('theme', !isLightMode ? 'light' : 'dark'); applyTheme(!isLightMode); };
-            const toggleSync = (shouldSync, name, pass) => {
-                if (shouldSync) { setIsSyncActive(true); setVaultName(name); setVaultPass(pass); localStorage.setItem('mesh_active', 'true'); localStorage.setItem('mesh_vault_pass', pass); initMesh(name, pass); }
-                else { setIsSyncActive(false); localStorage.removeItem('mesh_active'); if (Hub.peer) Hub.peer.destroy(); setPeers([]); }
-            };
-
-            const handleInstall = async () => {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                const result = await deferredPrompt.userChoice;
-                setDeferredPrompt(null);
-            };
-
-            const insertTimestamp = () => {
-                const now = new Date();
-                const min = now.getMinutes().toString().padStart(2, '0');
-                const sec = now.getSeconds().toString().padStart(2, '0');
-                const ts = `${now.getHours()}:${min}:${sec}`;
-                const fullTs = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${ts}`;
-
-                if (editingNote) {
-                    setEditingNote({ ...editingNote, content: (editingNote.content || '') + '\n' + fullTs });
-                } else if (isCreating) {
-                    setContent((prev) => (prev || '') + '\n' + fullTs);
-                }
-            };
-
-
-            // --- DATA ---
-            const resetForm = () => { setTitle(''); setContent(''); setColor('default'); setItems([]); setLabels([]); setType('text'); };
-            const handleCreate = () => {
-                if (!title.trim() && !content.trim() && items.length === 0) { setIsCreating(false); return; }
-                const note = { title, color, pinned: false, type, labels, content: type === 'text' ? content : '', items: type === 'checklist' ? items : [] };
-                Database.upsert(Date.now(), note);
-                resetForm(); setIsCreating(false); if (isSyncActive) Hub.broadcast();
-            };
-            const handleDelete = (id) => { Database.delete(id); if (isSyncActive) Hub.broadcast(); };
-            const handleTogglePin = (note) => { Database.upsert(note.id, { ...note, pinned: !note.pinned }); if (isSyncActive) Hub.broadcast(); };
-            const handleToggleCheck = (noteId, itemIdx) => {
-                const note = notes.find(n => n.id === noteId); if (!note) return;
-                const ni = [...note.items]; ni[itemIdx].checked = !ni[itemIdx].checked;
-                Database.upsert(note.id, { ...note, items: ni }); if (isSyncActive) Hub.broadcast();
-            };
-            const handleSaveEdit = () => {
-                if (!editingNote) return;
-                Database.upsert(editingNote.id, { ...editingNote });
-                setEditingNote(null); if (isSyncActive) Hub.broadcast();
-            };
-            const addManualLabel = (l) => {
-                if (!manualLabels.includes(l)) {
-                    const newLs = [...manualLabels, l];
-                    setManualLabels(newLs);
-                    localStorage.setItem('mesh_manual_labels', JSON.stringify(newLs));
-                }
-            };
-
-            // --- IMPORT / EXPORT ---
-            const handleExport = () => {
-                const data = Database.getPayload();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = `keep-mesh-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-            };
-            const handleImport = (e) => {
-                const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => { try { if (Database.merge(JSON.parse(ev.target.result))) { setNotes(Database.getAll()); alert("Import successful!"); } else alert("No new data."); } catch (err) { alert("Error: " + err.message); } };
-                reader.readAsText(file);
-            };
-
-            const pinned = displayedNotes.filter(n => n.pinned);
-            const others = displayedNotes.filter(n => !n.pinned);
-
-            // UI Components
-            const ColorPickerBtn = ({ selected, onSelect }) => (
-                <div className="relative">
-                    <button className={`p-1.5 rounded-full border border-white/10 note-color-${selected}`} onClick={(e) => { e.stopPropagation(); setShowColorPicker(!showColorPicker); }}>
-                        <Icon name="palette" size={16} />
-                    </button>
-                    {showColorPicker && (
-                        <div className="absolute bottom-full left-0 mb-2 p-2 glass rounded-xl grid grid-cols-4 gap-2 z-50 animate-pop shadow-xl w-40">
-                            {NOTE_COLORS.map(c => (
-                                <button key={c.id} onClick={() => { onSelect(c.id); setShowColorPicker(false); }} className={`w-6 h-6 rounded-full border border-black/10 note-color-${c.id} ${selected === c.id ? 'ring-2 ring-indigo-500' : ''}`} title={c.label} />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-
-            const LabelSelector = ({ currentLabels, onToggle }) => (
-                <div className="relative group">
-                    <button className="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
-                        <Icon name="tag" size={12} /> <span>{currentLabels.length ? (currentLabels.length > 2 ? `${currentLabels.length} labels` : currentLabels.join(', ')) : 'Labels'}</span>
-                    </button>
-                    <div className="absolute bottom-full left-0 mb-2 w-48 glass rounded-xl p-2 hidden group-hover:block z-50 animate-pop border border-white/5 shadow-xl">
-                        <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
-                            {allLabels.map(l => (
-                                <div key={l} className="flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 rounded cursor-pointer" onClick={() => onToggle(l)}>
-                                    <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center ${currentLabels.includes(l) ? 'bg-indigo-500 border-indigo-500' : 'border-gray-500'}`}>
-                                        {currentLabels.includes(l) && <Icon name="check" size={10} className="text-white bg-transparent" />}
-                                    </div>
-                                    <span className="text-sm truncate select-none">{l}</span>
-                                </div>
-                            ))}
-                            {allLabels.length === 0 && <div className="text-xs text-gray-500 p-2 text-center">No labels created</div>}
-                        </div>
-                    </div>
-                </div>
-            );
+            const applyEncryption = () => { Database.configure(pendingEncConfig); alert("Applied."); };
+            const handleConnect = () => { Database.setNodeLabel(tempLabel); setVaultName(tempName); toggleSync(true, tempName, tempPass); };
+            const handleReset = () => { if (resetPhrase.toLowerCase() === 'reset') { localStorage.clear(); window.location.reload(); } };
 
             return (
-                <div className="min-h-screen flex flex-col pb-20">
-                    <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} labels={allLabels} selectedLabel={selectedLabel} onSelectLabel={setSelectedLabel} isLightMode={isLightMode} onAddLabel={addManualLabel} />
-
-                    {/* Header */}
-                    <header className="h-16 px-4 flex items-center justify-between border-b border-white/5 sticky top-0 z-40 glass backdrop-blur-md">
-                        <div className="flex items-center gap-2 sm:gap-4 select-none flex-1 overflow-hidden">
-                            <button className="p-2 -ml-2 hover:bg-black/10 rounded-full shrink-0" onClick={() => setSidebarOpen(true)}><Icon name="menu" size={24} className="opacity-80" /></button>
-                            <div className="flex items-center gap-2 cursor-pointer mr-2 shrink-0" onClick={() => setSelectedLabel(null)}>
-                                <div className="w-8 h-8 bg-yellow-400 rounded-md flex items-center justify-center text-yellow-900 shadow-md shrink-0"><Icon name="sticky-note" size={18} /></div>
-                                <h1 className="text-lg font-medium tracking-tight hidden sm:block opacity-90 truncate">{selectedLabel || 'Keep Mesh'}</h1>
-                            </div>
-                            <div className="hidden sm:flex bg-gray-500/10 focus-within:bg-white/10 focus-within:shadow-md rounded-lg flex-1 max-w-xl items-center px-4 h-11 transition-all mx-2">
-                                <Icon name="search" size={18} className="text-gray-400" />
-                                <input type="text" placeholder="Search" className="bg-transparent border-none outline-none flex-1 px-4 text-sm h-full placeholder:text-gray-500" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-                            </div>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+                    <div className="glass max-w-md w-full rounded-[2rem] border border-white/10 shadow-3xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                            <h2 className="text-xl font-bold">{view === 'MAIN' ? 'Settings' : 'Back'}</h2>
+                            <button onClick={view === 'MAIN' ? onClose : () => setView('MAIN')} className="p-2 hover:bg-white/10 rounded-full">
+                                <Icon name={view === 'MAIN' ? "x" : "arrow-left"} size={20} />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                            {deferredPrompt && <button onClick={handleInstall} className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-full text-xs font-bold text-white transition-colors"><Icon name="download" size={14} /> Install App</button>}
-
-                            {/* Sync Status Mobile */}
-                            {isSyncActive && (
-                                <div className="flex md:hidden w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <div className="p-6">
+                            {view === 'MAIN' && (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={toggleTheme}>
+                                        <div className="flex items-center gap-3"><Icon name={isLightMode ? "sun" : "moon"} /> Appearance</div>
+                                        <div className={`w-10 h-5 rounded-full relative ${isLightMode ? 'bg-indigo-500' : 'bg-gray-600'}`}>
+                                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isLightMode ? 'left-5.5' : 'left-0.5'}`} />
+                                        </div>
+                                    </div>
+                                    {['SYNC', 'SECURITY', 'DATA', 'RESET'].map(v => (
+                                        <div key={v} className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView(v)}>
+                                            <span className="capitalize">{v.toLowerCase()}</span> <Icon name="chevron-right" size={16} />
+                                        </div>
+                                    ))}
+                                </div>
                             )}
-
-                            <button className="p-2 hover:bg-black/10 rounded-full transition-colors" onClick={() => setShowSettings(true)}><Icon name="settings" size={20} className="text-gray-400" /></button>
-                        </div>
-                    </header>
-                    {/* Mobile Search */}
-                    <div className="sm:hidden px-4 py-2 border-b border-white/5 sticky top-16 z-30 glass">
-                        <div className="bg-gray-500/10 rounded-lg flex items-center px-4 h-10">
-                            <Icon name="search" size={16} className="text-gray-400" />
-                            <input type="text" placeholder="Search" className="bg-transparent border-none outline-none flex-1 px-4 text-sm h-full placeholder:text-gray-500" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                            {view === 'SECURITY' && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none" value={pendingEncConfig.storageAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageAlgo: e.target.value })}>
+                                            <option value="NONE">No Encryption</option>
+                                            <option value="AES">AES-256</option>
+                                        </select>
+                                        <input type="password" placeholder="Key" className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageKey: e.target.value })} />
+                                    </div>
+                                    <button onClick={applyEncryption} className="w-full py-3 bg-indigo-600 rounded-xl font-bold">Apply Changes</button>
+                                </div>
+                            )}
+                            {view === 'SYNC' && (
+                                <div className="space-y-4">
+                                    <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Your Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
+                                    <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Vault Name" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
+                                    <button onClick={isSyncActive ? () => toggleSync(false) : handleConnect} className={`w-full py-3 rounded-xl font-bold ${isSyncActive ? 'bg-red-500/20 text-red-400' : 'bg-indigo-600'}`}>
+                                        {isSyncActive ? 'Disconnect' : 'Connect'}
+                                    </button>
+                                </div>
+                            )}
+                            {view === 'DATA' && (
+                                <div className="space-y-3">
+                                    <button onClick={onExport} className="w-full py-3 bg-white/5 rounded-xl border border-white/5">Export JSON</button>
+                                    <div className="relative">
+                                        <button className="w-full py-3 bg-white/5 rounded-xl border border-white/5">Import JSON</button>
+                                        <input type="file" accept=".json" onChange={onImport} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    </div>
+                                </div>
+                            )}
+                            {view === 'RESET' && (
+                                <div className="space-y-4">
+                                    <p className="text-xs text-red-400">Type "reset" to confirm deletion of ALL data.</p>
+                                    <input className="w-full bg-black/20 p-3 rounded-xl border border-red-500/20" value={resetPhrase} onChange={e => setResetPhrase(e.target.value)} placeholder="reset" />
+                                    <button onClick={handleReset} className="w-full py-3 bg-red-600 rounded-xl font-bold">Factory Reset</button>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 space-y-8">
-                        {/* Creator */}
-                        <div className="max-w-[600px] mx-auto w-full relative z-10">
-                            <div className={`glass rounded-xl shadow-lg border ${isLightMode ? 'border-gray-200' : 'border-white/10'} overflow-hidden transition-all duration-300 ${isCreating ? 'active-creator ring-1 ring-black/5' : ''}`}>
-                                {isCreating ? (
-                                    <div className="p-4 space-y-3 animate-pop">
-                                        <input autoFocus type="text" placeholder="Title" className="w-full bg-transparent border-none outline-none font-medium text-lg placeholder:font-medium placeholder:text-gray-500" value={title} onChange={e => setTitle(e.target.value)} />
-                                        {type === 'text' ? (
-                                            <textarea placeholder="Take a note..." className="w-full bg-transparent border-none outline-none text-sm min-h-[80px] resize-none placeholder:text-gray-500" value={content} onChange={e => setContent(e.target.value)} />
-                                        ) : (
-                                            <div className="space-y-2">
-                                                {items.map((item, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2 text-sm"><Icon name={item.checked ? "check-square" : "square"} size={16} /><span className={item.checked ? "line-through opacity-50" : ""}>{item.text}</span></div>
-                                                ))}
-                                                <div className="flex items-center gap-2 border-t border-white/5 pt-2"><Icon name="plus" size={16} /><input type="text" placeholder="List item" className="bg-transparent outline-none flex-1 text-sm" value={itemText} onChange={e => setItemText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && itemText) { setItems([...items, { text: itemText, checked: false }]); setItemText(''); } }} /></div>
-                                            </div>
-                                        )}
-                                        <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                                            <div className="flex gap-2 items-center">
-                                                <ColorPickerBtn selected={color} onSelect={setColor} />
-                                                <LabelSelector currentLabels={labels} onToggle={(l) => setLabels(labels.includes(l) ? labels.filter(x => x !== l) : [...labels, l])} />
-                                                <button onClick={insertTimestamp} title="Insert Timestamp" className="p-1.5 hover:bg-black/5 rounded-full"><Icon name="clock" size={16} /></button>
-                                                <button onClick={() => setType(type === 'text' ? 'checklist' : 'text')} title="Toggle Checklist" className="p-1.5 hover:bg-black/5 rounded-full"><Icon name={type === 'text' ? "check-square" : "type"} size={16} /></button>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => { setIsCreating(false); resetForm(); }} className="text-sm px-3 py-1.5">Cancel</button>
-                                                <button onClick={handleCreate} className="text-sm font-medium bg-indigo-600 text-white px-5 py-1.5 rounded-md shadow-lg">Save</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="px-5 py-3.5 flex items-center justify-between cursor-text opacity-70" onClick={() => setIsCreating(true)}>
-                                        <span className="font-medium text-sm">Take a note...</span>
-                                        <div className="flex gap-4">
-                                            <div title="New List" onClick={(e) => { e.stopPropagation(); setIsCreating(true); setType('checklist'); }}><Icon name="check-square" size={18} /></div>
-                                            <Icon name="image" size={18} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Lists */}
-                        <div className="space-y-8 pb-20">
-                            {pinned.length > 0 && <section className="space-y-2"><small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-2">Pinned</small><div className="masonry">{pinned.map(n => <NoteCard key={n.id} note={n} onEdit={setEditingNote} onDelete={handleDelete} onTogglePin={handleTogglePin} onToggleCheck={handleToggleCheck} />)}</div></section>}
-                            <section className="space-y-2">
-                                {pinned.length > 0 && <small className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-2">Others</small>}
-                                <div className="masonry">{others.map(n => <NoteCard key={n.id} note={n} onEdit={setEditingNote} onDelete={handleDelete} onTogglePin={handleTogglePin} onToggleCheck={handleToggleCheck} />)}</div>
-                            </section>
-                        </div>
-                    </main>
-
-                    {/* Edit Modal */}
-                    {editingNote && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleSaveEdit}>
-                            <div className={`w-full max-w-xl rounded-xl shadow-2xl overflow-hidden animate-pop note-color-${editingNote.color} border border-white/5 relative flex flex-col max-h-[85vh]`} onClick={e => e.stopPropagation()}>
-                                <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
-                                    <input type="text" value={editingNote.title} onChange={e => setEditingNote({ ...editingNote, title: e.target.value })} className="w-full bg-transparent outline-none text-xl font-bold" placeholder="Title" />
-                                    {editingNote.type === 'checklist' ? (
-                                        <div className="space-y-2">
-                                            {(editingNote.items || []).map((item, idx) => (
-                                                <div key={idx} className="flex items-center gap-3">
-                                                    <div className={`w-4 h-4 border cursor-pointer flex items-center justify-center rounded-sm ${item.checked ? 'bg-current opacity-60' : 'opacity-40'}`} onClick={() => { const ni = [...editingNote.items]; ni[idx].checked = !ni[idx].checked; setEditingNote({ ...editingNote, items: ni }); }}>{item.checked && <Icon name="check" size={12} />}</div>
-                                                    <input className={`bg-transparent outline-none flex-1 ${item.checked ? 'line-through opacity-50' : ''}`} value={item.text} onChange={(e) => { const ni = [...editingNote.items]; ni[idx].text = e.target.value; setEditingNote({ ...editingNote, items: ni }); }} />
-                                                    <button onClick={() => setEditingNote({ ...editingNote, items: editingNote.items.filter((_, i) => i !== idx) })}><Icon name="x" size={14} /></button>
-                                                </div>
-                                            ))}
-                                            <div className="flex items-center gap-3 pt-2 opacity-60"><Icon name="plus" size={16} /><input className="bg-transparent outline-none flex-1" placeholder="List item" onKeyDown={(e) => { if (e.key === 'Enter' && e.target.value) { setEditingNote({ ...editingNote, items: [...(editingNote.items || []), { text: e.target.value, checked: false }] }); e.target.value = ''; } }} /></div>
-                                        </div>
-                                    ) : (
-                                        <textarea value={editingNote.content} onChange={e => setEditingNote({ ...editingNote, content: e.target.value })} className="w-full bg-transparent outline-none min-h-[200px] resize-none text-base" placeholder="Note" />
-                                    )}
-                                    <div className="flex flex-wrap gap-2 pt-2">
-                                        {(editingNote.labels || []).map(l => (
-                                            <span key={l} className="px-3 py-1 bg-black/10 rounded-full text-xs font-bold flex items-center gap-1">{l} <Icon name="x" size={12} className="cursor-pointer" onClick={() => setEditingNote({ ...editingNote, labels: editingNote.labels.filter(x => x !== l) })} /></span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="px-4 py-3 bg-black/5 flex justify-between items-center">
-                                    <div className="flex gap-3">
-                                        <ColorPickerBtn selected={editingNote.color} onSelect={(c) => setEditingNote({ ...editingNote, color: c })} />
-                                        <LabelSelector currentLabels={editingNote.labels || []} onToggle={(l) => setEditingNote({ ...editingNote, labels: (editingNote.labels || []).includes(l) ? editingNote.labels.filter(x => x !== l) : [...(editingNote.labels || []), l] })} />
-                                        <button onClick={insertTimestamp} title="Insert Timestamp" className="p-1.5 hover:bg-black/10 rounded-full"><Icon name="clock" size={16} /></button>
-                                    </div>
-                                    <button onClick={handleSaveEdit} className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md shadow-lg">Done</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Settings Modal */}
-                    {showSettings && (
-                        <SettingsModal
-                            isOpen={showSettings}
-                            onClose={() => setShowSettings(false)}
-                            isLightMode={isLightMode}
-                            toggleTheme={toggleTheme}
-                            isSyncActive={isSyncActive}
-                            toggleSync={toggleSync}
-                            vaultName={vaultName}
-                            setVaultName={setVaultName}
-                            peers={peers}
-                            localLabel={Database.nodeLabel}
-                            onExport={handleExport}
-                            onImport={handleImport}
-                        />
-                    )}
                 </div>
             );
         };
 
-        const SettingsModal = ({ isOpen, onClose, isLightMode, toggleTheme, isSyncActive, toggleSync, vaultName, setVaultName, peers, localLabel, onExport, onImport }) => {
-            const [view, setView] = useState('MAIN'); // MAIN | SYNC | DATA | SECURITY
-            const [tempName, setTempName] = useState(vaultName);
-            const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
-            const [tempLabel, setTempLabel] = useState(localLabel);
-            const [encConfig, setEncConfig] = useState(Database.config);
-            const [resetPhrase, setResetPhrase] = useState('');
+        // --- MAIN APP ---
 
-            const updateEnc = (key, val) => {
-                const newC = { ...encConfig, [key]: val };
-                setEncConfig(newC);
-                Database.configure(newC);
-            };
+        const App = () => {
+            const [notes, setNotes] = useState([]);
+            const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [selectedLabel, setSelectedLabel] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [showSettings, setShowSettings] = useState(false);
+            const [isLightMode, setIsLightMode] = useState(localStorage.getItem('theme') === 'light');
+            const [isSyncActive, setIsSyncActive] = useState(localStorage.getItem('theme_sync') === 'true');
+            const [vaultName, setVaultName] = useState(localStorage.getItem('mesh_vault_name') || 'MainVault');
+            const [isCreating, setIsCreating] = useState(false);
+            const [peers, setPeers] = useState([]);
+            const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-            if (!isOpen) return null;
+            useEffect(() => {
+                window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); setDeferredPrompt(e); });
+                Database.init(vaultName, () => setNotes(Database.getAll()));
+                if (localStorage.getItem('mesh_sync_active') === 'true') {
+                    toggleSync(true, vaultName, localStorage.getItem('mesh_vault_pass'));
+                }
+            }, []);
 
-            const handleConnect = () => {
-                Database.setNodeLabel(tempLabel);
-                setVaultName(tempName);
-                toggleSync(true, tempName, tempPass);
-            };
+            useEffect(() => {
+                document.body.className = isLightMode ? 'light-theme' : '';
+            }, [isLightMode]);
 
-            const handleDisconnect = () => {
-                toggleSync(false);
-            };
-
-            const handleReset = () => {
-                if (resetPhrase === 'DELETE EVERYTHING') {
-                    localStorage.clear();
-                    window.location.reload();
+            const toggleSync = (active, name, pass) => {
+                if (active) {
+                    Hub.initialize(name, pass, () => {
+                        setPeers(Array.from(Hub.conns.entries()).map(([id, info]) => ({ id, label: info.label })));
+                        setIsSyncActive(true);
+                        localStorage.setItem('mesh_sync_active', 'true');
+                    });
+                } else {
+                    if (Hub.peer) Hub.peer.destroy();
+                    setIsSyncActive(false);
+                    localStorage.setItem('mesh_sync_active', 'false');
                 }
             };
 
+            const upsert = (data) => {
+                Database.upsert(data.id || Date.now(), data);
+                if (isSyncActive) Hub.broadcast();
+                setNotes(Database.getAll());
+            };
+
+            const filtered = useMemo(() => {
+                return notes.filter(n => {
+                    const matchLabel = !selectedLabel || n.labels?.includes(selectedLabel);
+                    const matchSearch = !searchQuery || JSON.stringify(n).toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchLabel && matchSearch;
+                });
+            }, [notes, selectedLabel, searchQuery]);
+
             return (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
-                    <div className="glass max-w-md w-full rounded-[2rem] border border-white/10 shadow-3xl animate-pop overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="min-h-screen pt-20 pb-10">
+                    <header className="h-16 px-4 flex items-center gap-2 border-b border-white/5 fixed top-0 left-0 right-0 z-40 glass">
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-black/10 rounded-full shrink-0"><Icon name="menu" /></button>
 
-                        {/* HEADER */}
-                        <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                            {view === 'MAIN' ? (
-                                <h2 className="text-xl font-bold">Settings</h2>
-                            ) : (
-                                <button onClick={() => { setView('MAIN'); setResetPhrase(''); }} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-                                    <Icon name="arrow-left" size={18} />
-                                    <span className="font-medium">Back</span>
-                                </button>
-                            )}
-                            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full"><Icon name="x" size={20} /></button>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-yellow-900 shadow-sm">
+                                <Icon name="sticky-note" size={18} />
+                            </div>
+                            <h1 className="text-lg font-bold truncate hidden lg:block">{selectedLabel || 'Keep Mesh'}</h1>
                         </div>
 
-                        {/* CONTENT */}
-                        <div className="p-6">
-                            {view === 'MAIN' && (
+                        <div className="bg-gray-500/10 focus-within:bg-gray-500/20 rounded-lg flex-1 max-w-xl flex items-center px-3 h-10 transition-colors mx-1 min-w-0">
+                            <Icon name="search" size={16} className="text-gray-400 shrink-0" />
+                            <input className="bg-transparent border-none outline-none px-2 text-sm flex-1 min-w-0" placeholder="Search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                        </div>
+
+                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-black/10 rounded-full shrink-0"><Icon name="settings" /></button>
+                    </header>
+
+                    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} labels={[...new Set(notes.flatMap(n => n.labels || []))]}
+                        selectedLabel={selectedLabel} onSelectLabel={setSelectedLabel} isLightMode={isLightMode} onAddLabel={() => { }}
+                        deferredPrompt={deferredPrompt} onInstall={() => deferredPrompt.prompt()} />
+
+                    <main className="max-w-4xl mx-auto px-4 space-y-6">
+                        <div className="glass p-4 rounded-xl border border-white/10" onClick={() => { if (!isCreating) setIsCreating(true); }}>
+                            {!isCreating ? <div className="text-sm opacity-50">Take a note...</div> : (
                                 <div className="space-y-4">
-                                    {/* Theme Option */}
-                                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all" onClick={toggleTheme}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white/5 rounded-full"><Icon name={isLightMode ? "sun" : "moon"} /></div>
-                                            <span className="font-medium">Appearance</span>
-                                        </div>
-                                        <div className={`w-12 h-6 rounded-full transition-all relative ${isLightMode ? 'bg-indigo-500' : 'bg-gray-600'}`}>
-                                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${isLightMode ? 'left-7' : 'left-1'}`} />
-                                        </div>
+                                    <input className="w-full bg-transparent font-bold text-lg outline-none" placeholder="Title" id="n-title" />
+                                    <textarea className="w-full bg-transparent outline-none text-sm min-h-[100px]" placeholder="Content" id="n-content" />
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={() => setIsCreating(false)}>Cancel</button>
+                                        <button className="px-4 py-2 bg-indigo-600 rounded-lg font-bold" onClick={() => {
+                                            upsert({ title: document.getElementById('n-title').value, content: document.getElementById('n-content').value });
+                                            setIsCreating(false);
+                                        }}>Save</button>
                                     </div>
-
-                                    {/* Sync Access Button */}
-                                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all" onClick={() => setView('SYNC')}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white/5 rounded-full"><Icon name="refresh-cw" className={isSyncActive ? "text-green-400" : ""} /></div>
-                                            <div>
-                                                <div className="font-medium">Synchronization</div>
-                                                <div className="text-[10px] text-gray-500 font-bold">{isSyncActive ? 'ACTIVE' : 'DISCONNECTED'}</div>
-                                            </div>
-                                        </div>
-                                        <Icon name="chevron-right" className="text-gray-500" />
-                                    </div>
-
-                                    {/* Security & Encryption */}
-                                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all" onClick={() => setView('SECURITY')}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white/5 rounded-full"><Icon name="lock" className={encConfig.storageAlgo !== 'NONE' ? "text-amber-400" : ""} /></div>
-                                            <div>
-                                                <div className="font-medium">Security</div>
-                                                <div className="text-[10px] text-gray-500 font-bold">{encConfig.storageAlgo !== 'NONE' ? 'ENCRYPTED' : 'OFF'}</div>
-                                            </div>
-                                        </div>
-                                        <Icon name="chevron-right" className="text-gray-500" />
-                                    </div>
-
-                                    {/* Backup & Data */}
-                                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all" onClick={() => setView('DATA')}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white/5 rounded-full"><Icon name="hard-drive" /></div>
-                                            <div>
-                                                <div className="font-medium">Backup & Restore</div>
-                                                <div className="text-[10px] text-gray-500 font-bold">IMPORT / EXPORT</div>
-                                            </div>
-                                        </div>
-                                        <Icon name="chevron-right" className="text-gray-500" />
-                                    </div>
-
-                                    {/* Install App Link */}
-                                    {window.matchMedia('(display-mode: browser)').matches && (
-                                        <div className="text-center text-xs text-gray-600 pt-4">
-                                            Use "Add to Home Screen" to install app
-                                        </div>
-                                    )}
-
-                                    <div className="h-px bg-white/5 my-2"></div>
-
-                                    {/* Danger Zone */}
-                                    <div className="flex items-center justify-between p-4 bg-red-500/5 rounded-2xl border border-red-500/10 cursor-pointer hover:bg-red-500/10 transition-all" onClick={() => setView('RESET')}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-red-500/10 rounded-full"><Icon name="trash-2" className="text-red-400" /></div>
-                                            <div className="font-medium text-red-400">Danger Zone</div>
-                                        </div>
-                                        <Icon name="chevron-right" className="text-red-400" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {view === 'SECURITY' && (
-                                <div className="space-y-6 animate-pop">
-                                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
-                                        <h3 className="text-sm font-bold text-amber-500 flex items-center gap-2"><Icon name="shield-alert" size={16} /> Encryption Settings</h3>
-                                        <p className="text-xs text-gray-400 leading-relaxed">
-                                            Data is encrypted before being saved to disk or sent over the network.
-                                            <strong> Warning:</strong> If you lose your keys, data cannot be recovered.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        {/* Storage Encryption */}
-                                        <div className="space-y-2">
-                                            <label className="text-xs uppercase font-bold text-gray-500 pl-1">Local Storage Encryption</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none focus:border-indigo-500 appearance-none"
-                                                    value={encConfig.storageAlgo} onChange={e => updateEnc('storageAlgo', e.target.value)}>
-                                                    <option value="NONE">None (Plain)</option>
-                                                    <option value="AES">AES-256</option>
-                                                    <option value="RABBIT">Rabbit</option>
-                                                    <option value="RC4">RC4</option>
-                                                </select>
-                                                <input type="password" placeholder="Storage Key" className={`bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none focus:border-indigo-500 ${encConfig.storageAlgo === 'NONE' ? 'opacity-50' : ''}`}
-                                                    disabled={encConfig.storageAlgo === 'NONE'}
-                                                    value={encConfig.storageKey} onChange={e => updateEnc('storageKey', e.target.value)} />
-                                            </div>
-                                        </div>
-
-                                        <div className="h-px bg-white/5 my-2"></div>
-
-                                        {/* Sync Encryption */}
-                                        <div className="space-y-2">
-                                            <label className="text-xs uppercase font-bold text-gray-500 pl-1">Sync / Network Encryption</label>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none focus:border-indigo-500 appearance-none"
-                                                    value={encConfig.syncAlgo} onChange={e => updateEnc('syncAlgo', e.target.value)}>
-                                                    <option value="NONE">None (Plain)</option>
-                                                    <option value="AES">AES-256</option>
-                                                    <option value="RABBIT">Rabbit</option>
-                                                    <option value="RC4">RC4</option>
-                                                </select>
-                                                <input type="password" placeholder="Sync Key" className={`bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none focus:border-indigo-500 ${encConfig.syncAlgo === 'NONE' ? 'opacity-50' : ''}`}
-                                                    disabled={encConfig.syncAlgo === 'NONE'}
-                                                    value={encConfig.syncKey} onChange={e => updateEnc('syncKey', e.target.value)} />
-                                            </div>
-                                            <p className="text-[10px] text-gray-500 pl-1">All peers must use the same Algorithm and Key to communicate.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {view === 'SYNC' && (
-                                <div className="space-y-6 animate-pop">
-                                    <div className="space-y-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-500 pl-1">Node Label (Me)</label>
-                                            <input type="text" value={tempLabel} onChange={e => setTempLabel(e.target.value)} className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm font-medium outline-none focus:border-indigo-500" placeholder="My Device" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-500 pl-1">Network Name</label>
-                                            <input type="text" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} className={`w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm font-mono outline-none focus:border-indigo-500 ${isSyncActive ? 'opacity-50' : ''}`} placeholder="MyVault" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] uppercase font-bold text-gray-500 pl-1">Network Password (Optional)</label>
-                                            <input type="password" value={tempPass} onChange={e => setTempPass(e.target.value)} disabled={isSyncActive} className={`w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm font-mono outline-none focus:border-indigo-500 ${isSyncActive ? 'opacity-50' : ''}`} placeholder="••••••" />
-                                        </div>
-                                    </div>
-
-                                    {isSyncActive ? (
-                                        <div className="space-y-4">
-                                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs font-bold text-green-400 uppercase tracking-wider">Status: Connected</span>
-                                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_green]"></div>
-                                                </div>
-                                                <div className="h-px bg-green-500/20 my-2"></div>
-                                                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                                                    <div className="flex items-center justify-between text-xs text-gray-300">
-                                                        <span>{tempLabel} (You)</span>
-                                                    </div>
-                                                    {peers.map(p => (
-                                                        <div key={p.id} className="flex items-center justify-between text-xs text-gray-300">
-                                                            <span>{p.label}</span>
-                                                            <div className="flex items-center gap-1">
-                                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <button onClick={handleDisconnect} className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-xl transition-all border border-red-500/20">
-                                                Disconnect
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={handleConnect} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all">
-                                            Connect to Grid
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-
-                            {view === 'DATA' && (
-                                <div className="space-y-6 animate-pop">
-                                    <div className="space-y-4">
-                                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-3">
-                                            <div className="flex items-start gap-3">
-                                                <div className="p-2 bg-blue-500/20 rounded-full"><Icon name="cloud" size={20} className="text-blue-400" /></div>
-                                                <div>
-                                                    <h3 className="font-bold text-sm text-blue-300">Cloud & Local Backup</h3>
-                                                    <p className="text-xs text-gray-400 leading-relaxed mt-1">
-                                                        Your data is stored locally. Download a backup to secure your data or upload it to Google Drive manually.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <button onClick={onExport} className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 font-medium transition-all">
-                                                <Icon name="download" size={18} />
-                                                <span>Download Backup (JSON)</span>
-                                            </button>
-
-                                            <div className="relative">
-                                                <button className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 font-medium transition-all">
-                                                    <Icon name="upload" size={18} />
-                                                    <span>Import Backup</span>
-                                                </button>
-                                                <input type="file" accept=".json" onChange={onImport} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                            </div>
-                                        </div>
-
-                                        <div className="h-px bg-white/5"></div>
-
-                                        <button className="w-full py-3 bg-[#4285F4]/10 hover:bg-[#4285F4]/20 border border-[#4285F4]/20 rounded-xl flex items-center justify-center gap-2 text-[#4285F4] font-medium transition-all" onClick={onExport}>
-                                            <Icon name="save" size={18} />
-                                            <span>Save for Google Drive</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {view === 'RESET' && (
-                                <div className="space-y-6 animate-pop">
-                                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
-                                        <h3 className="text-sm font-bold text-red-500 flex items-center gap-2"><Icon name="alert-triangle" size={16} /> Factory Reset</h3>
-                                        <p className="text-xs text-gray-300 leading-relaxed">
-                                            This action will <strong>permanently delete all notes, settings, and keys</strong> from this device.
-                                            Data cannot be recovered unless you have a backup.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <label className="text-xs uppercase font-bold text-gray-500 pl-1">Type "DELETE EVERYTHING" to confirm</label>
-                                        <input
-                                            type="text"
-                                            value={resetPhrase}
-                                            onChange={e => setResetPhrase(e.target.value)}
-                                            className="w-full bg-black/20 p-3 rounded-xl border border-red-500/30 text-sm font-bold text-red-400 outline-none focus:border-red-500 placeholder:text-red-500/20"
-                                            placeholder="DELETE EVERYTHING"
-                                        />
-                                    </div>
-
-                                    <button
-                                        disabled={resetPhrase !== 'DELETE EVERYTHING'}
-                                        onClick={handleReset}
-                                        className={`w-full py-3 font-bold rounded-xl transition-all border ${resetPhrase === 'DELETE EVERYTHING' ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-lg shadow-red-500/20' : 'bg-white/5 text-gray-500 border-white/5 cursor-not-allowed'}`}
-                                    >
-                                        Reset Application
-                                    </button>
                                 </div>
                             )}
                         </div>
-                    </div>
+
+                        <div className="masonry">
+                            {filtered.map(n => <NoteCard key={n.id} note={n} onEdit={() => { }} onTogglePin={() => { }} onToggleCheck={() => { }} />)}
+                        </div>
+                    </main>
+
+                    <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} isLightMode={isLightMode}
+                        toggleTheme={() => setIsLightMode(!isLightMode)} isSyncActive={isSyncActive} toggleSync={toggleSync}
+                        vaultName={vaultName} setVaultName={setVaultName} peers={peers} localLabel={Database.nodeLabel}
+                        onExport={() => alert(JSON.stringify(Database.getPayload()))} onImport={() => { }} />
                 </div>
             );
         };
