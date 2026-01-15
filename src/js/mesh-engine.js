@@ -21,9 +21,19 @@ const Hub = {
         if (this.peer && !this.peer.destroyed) this.peer.destroy();
 
         const targetId = attemptMaster ? this.discoveryId : null;
-        this.peer = new Peer(targetId, {
+        const cfg = Database.config || {};
+        const peerOptions = {
             config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
-        });
+        };
+
+        if (cfg.p2pHost) {
+            peerOptions.host = cfg.p2pHost;
+            peerOptions.port = cfg.p2pPort || 443;
+            peerOptions.path = cfg.p2pPath || '/';
+            peerOptions.secure = cfg.p2pSecure !== false;
+        }
+
+        this.peer = new Peer(targetId, peerOptions);
 
         this.peer.on('open', (id) => {
             console.log("Hub: Active as", id === this.discoveryId ? "MASTER" : "SATELLITE");
@@ -53,6 +63,7 @@ const Hub = {
         });
 
         c.on('data', (msg) => {
+            console.log(`Hub: Received ${msg.type} from ${c.peer}`, msg);
             if (msg.type === 'SYNC') {
                 if (msg.label && this.conns.has(c.peer)) {
                     this.conns.get(c.peer).label = msg.label;
@@ -67,7 +78,10 @@ const Hub = {
                 }
 
                 if (payload && typeof payload === 'object') {
-                    if (Database.merge(payload)) this.broadcast();
+                    if (Database.merge(payload)) {
+                        // Forward the change to others (gossip)
+                        this.broadcast(payload);
+                    }
                 }
 
                 if (msg.topology) msg.topology.forEach(pid => this.connect(pid));
@@ -101,21 +115,24 @@ const Hub = {
             payload = CryptoLayer.encrypt(payload, Database.config.syncAlgo, Database.config.syncKey);
         }
 
-        c.send({
+        const msg = {
             type: 'SYNC',
             payload: payload,
             label: Database.nodeLabel,
             topology: Array.from(this.conns.keys()).concat([this.peer.id])
-        });
+        };
+        console.log(`Hub: Sending sync to ${c.peer}`, msg);
+        c.send(msg);
     },
 
-    broadcast() {
-        let payload = Database.getPayload();
+    broadcast(customPayload) {
+        let payload = customPayload || Database.getPayload();
         if (window.CryptoLayer && Database.config.syncAlgo !== 'NONE' && Database.config.syncKey) {
             payload = CryptoLayer.encrypt(payload, Database.config.syncAlgo, Database.config.syncKey);
         }
 
         const msg = { type: 'SYNC', payload: payload, label: Database.nodeLabel };
+        console.log(`Hub: Broadcasting ${customPayload ? 'DELTA' : 'FULL'} sync to ${this.conns.size} nodes`, msg);
         this.conns.forEach(node => node.conn.open && node.conn.send(msg));
     }
 };

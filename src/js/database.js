@@ -16,7 +16,11 @@ const Database = {
         storageAlgo: 'NONE', // NONE | AES | RABBIT | RC4
         storageKey: '',
         syncAlgo: 'NONE',
-        syncKey: ''
+        syncKey: '',
+        p2pHost: '',
+        p2pPort: 443,
+        p2pPath: '/',
+        p2pSecure: true
     },
 
     onUpdate: null,
@@ -143,7 +147,11 @@ const Database = {
         return Object.entries(this.addSet)
             .filter(([id, val]) => val.ts > (this.removeSet[id] || 0))
             .map(([id, val]) => ({ id, ...val.data }))
-            .sort((a, b) => b.id - a.id);
+            .sort((a, b) => {
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                return b.id - a.id;
+            });
     },
 
     getPayload() {

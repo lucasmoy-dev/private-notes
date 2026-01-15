@@ -1,20 +1,22 @@
-const CACHE_NAME = 'keep-mesh-v2';
+const CACHE_NAME = 'keep-mesh-v3';
 const ASSETS = [
     './',
     './index.html',
-    './database.js',
-    './mesh-engine.js',
-    './crypto-layer.js',
+    './src/css/styles.css',
+    './src/js/database.js',
+    './src/js/mesh-engine.js',
+    './src/js/crypto-layer.js',
     './manifest.json',
     'https://unpkg.com/react@18/umd/react.production.min.js',
     'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
     'https://unpkg.com/@babel/standalone/babel.min.js',
     'https://cdn.tailwindcss.com',
-    'https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js',
+    'https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js',
     'https://unpkg.com/lucide@latest',
     'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap',
-    'https://cdn-icons-png.flaticon.com/512/2965/2965358.png'
+    'https://cdn-icons-png.flaticon.com/512/2965/2965358.png',
+    'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'
 ];
 
 // Install: Cache all assets
@@ -44,9 +46,7 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// Fetch: Network first, fallback to cache for HTML.
-// Cache first for CDN assets.
-// Stale-while-revalidate for local JS.
+// Fetch handler
 self.addEventListener('fetch', (e) => {
     const url = new URL(e.request.url);
 
@@ -80,7 +80,7 @@ self.addEventListener('fetch', (e) => {
     );
 });
 
-// Handle skipWaiting message
+// Handle messages
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();

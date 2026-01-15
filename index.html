@@ -7,229 +7,27 @@
     <title>Keep Mesh - Private Decentralized Notes</title>
 
     <!-- PWA -->
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#202124">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2965/2965358.png">
 
     <!-- Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Local Components/Logic -->
-    <script src="./crypto-layer.js"></script>
-    <script src="./database.js"></script>
-    <script src="./mesh-engine.js"></script>
+    <!-- Estilos Separados (Esto funciona perfecto en file://) -->
+    <link rel="stylesheet" href="src/css/styles.css">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-
-        :root {
-            --bg-dark: #202124;
-            --bg-light: #ffffff;
-            --text-dark: #e8eaed;
-            --text-light: #202124;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-dark);
-            transition: all 0.3s ease;
-            overscroll-behavior-y: none;
-            margin: 0;
-        }
-
-        body.light-theme {
-            background: var(--bg-light);
-            color: var(--text-light);
-        }
-
-        .note-card {
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            will-change: transform, box-shadow;
-        }
-
-        body.light-theme .note-card {
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .note-card:hover {
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.6), 0 2px 6px 2px rgba(0, 0, 0, 0.3);
-            transform: translateY(-1px);
-        }
-
-        body.light-theme .note-card:hover {
-            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-        }
-
-        /* Note Colors */
-        .note-color-default {
-            background: transparent;
-        }
-
-        .note-color-red {
-            background: #5c2b29;
-            color: #f28b82;
-        }
-
-        .note-color-orange {
-            background: #614a19;
-            color: #fbbc04;
-        }
-
-        .note-color-yellow {
-            background: #635d19;
-            color: #fff475;
-        }
-
-        .note-color-green {
-            background: #345920;
-            color: #ccff90;
-        }
-
-        .note-color-teal {
-            background: #16504b;
-            color: #a7ffeb;
-        }
-
-        .note-color-blue {
-            background: #2d555e;
-            color: #cbf0f8;
-        }
-
-        .note-color-darkblue {
-            background: #1e3a5f;
-            color: #aecbfa;
-        }
-
-        .note-color-purple {
-            background: #42275e;
-            color: #d7aefb;
-        }
-
-        .note-color-pink {
-            background: #5b2245;
-            color: #fdcfe8;
-        }
-
-        .note-color-brown {
-            background: #442f19;
-            color: #e6c9a8;
-        }
-
-        .note-color-gray {
-            background: #3c3f43;
-            color: #e8eaed;
-        }
-
-        body.light-theme .note-color-red {
-            background: #f28b82;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-orange {
-            background: #fbbc04;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-yellow {
-            background: #fff475;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-green {
-            background: #ccff90;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-teal {
-            background: #a7ffeb;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-blue {
-            background: #cbf0f8;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-darkblue {
-            background: #aecbfa;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-purple {
-            background: #d7aefb;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-pink {
-            background: #fdcfe8;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-brown {
-            background: #e6c9a8;
-            color: #202124;
-        }
-
-        body.light-theme .note-color-gray {
-            background: #e8eaed;
-            color: #202124;
-        }
-
-        .masonry {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            grid-auto-rows: 10px;
-            gap: 12px;
-        }
-
-        .animate-pop {
-            animation: pop 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        @keyframes pop {
-            from {
-                opacity: 0.5;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(128, 128, 128, 0.2);
-            border-radius: 4px;
-        }
-
-        .glass {
-            background: rgba(32, 33, 36, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        body.light-theme .glass {
-            background: rgba(255, 255, 255, 0.85);
-            border-color: rgba(0, 0, 0, 0.05);
-        }
-    </style>
+    <!-- Lógica de Núcleo (Organizada en src/js/) -->
+    <script src="src/js/crypto-layer.js"></script>
+    <script src="src/js/database.js"></script>
+    <script src="src/js/mesh-engine.js"></script>
 </head>
 
 <body>
@@ -238,53 +36,354 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- UI COMPONENTS ---
+        const NOTE_COLORS = [
+            { id: 'default', label: 'Default' }, { id: 'red', label: 'Red' }, { id: 'orange', label: 'Orange' },
+            { id: 'yellow', label: 'Yellow' }, { id: 'green', label: 'Green' }, { id: 'teal', label: 'Teal' },
+            { id: 'blue', label: 'Blue' }, { id: 'darkblue', label: 'Dark Blue' }, { id: 'purple', label: 'Purple' },
+            { id: 'pink', label: 'Pink' }, { id: 'brown', label: 'Brown' }, { id: 'gray', label: 'Gray' }
+        ];
+
+        const formatDate = (ts) => {
+            const d = new Date(parseInt(ts));
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}, ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        };
+
+        // --- COMPONENTES UI ---
 
         const Icon = ({ name, size = 20, className = "", onClick, style = {} }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} className={className}
-                style={{ width: size, height: size, cursor: onClick ? 'pointer' : 'default', ...style }}
+                style={{ width: size, height: size, ...style }}
                 onClick={onClick} />;
         };
 
-        const NoteCard = ({ note, onEdit, onDelete, onTogglePin, onToggleCheck }) => {
-            const spanRef = useRef(15);
-            useEffect(() => {
-                let contentLen = (note.title?.length || 0);
-                if (note.type === 'checklist' && note.items) contentLen += note.items.length * 30;
-                else contentLen += (note.content?.length || 0);
-                const calculated = Math.ceil(contentLen / 20) + 4;
-                spanRef.current = Math.max(calculated, 10);
-            }, [note]);
-
-            const visibleItems = (note.items || []).slice(0, 8);
-            const remaining = Math.max(0, (note.items || []).length - 8);
-
+        const ColorPickerBtn = ({ selected, onSelect, colors }) => {
+            const [show, setShow] = useState(false);
             return (
-                <div className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-2 cursor-pointer break-inside-avoid shadow-sm`}
-                    style={{ gridRowEnd: `span ${spanRef.current}` }}
-                    onClick={() => onEdit(note)}>
-                    <div className="flex justify-between items-start">
-                        {note.title && <h3 className="font-bold text-lg leading-snug w-full pr-6">{note.title}</h3>}
-                        <button className="absolute top-3 right-3 p-1.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-black/10 transition-opacity" onClick={e => { e.stopPropagation(); onTogglePin(note); }}>
-                            <Icon name="pin" size={16} className={note.pinned ? "fill-current text-indigo-400" : "text-gray-400"} />
-                        </button>
-                    </div>
-                    <div className="text-sm leading-relaxed">
-                        {note.type === 'checklist' ? (
-                            <div className="space-y-1">
-                                {visibleItems.map((item, idx) => (
-                                    <div key={idx} className="flex items-start gap-2" onClick={e => e.stopPropagation()}>
-                                        <div className={`mt-0.5 min-w-[14px] h-[14px] border rounded-sm flex items-center justify-center cursor-pointer transition-colors ${item.checked ? 'bg-current border-transparent opacity-60' : 'border-current opacity-40'}`} onClick={() => onToggleCheck(note.id, idx)}>
-                                            {item.checked && <Icon name="check" size={10} className="stroke-[4]" />}
+                <div className="relative">
+                    <button className={`p-1.5 rounded-full border border-black/10 note-color-${selected}`} onClick={() => setShow(!show)}>
+                        <Icon name="palette" size={16} />
+                    </button>
+                    {show && (
+                        <div className="absolute bottom-full left-0 mb-2 p-2 glass rounded-xl grid grid-cols-4 gap-2 z-[60] animate-pop shadow-xl w-40" onMouseLeave={() => setShow(false)}>
+                            {colors.map(c => (
+                                <button key={c.id} onClick={() => { onSelect(c.id); setShow(false); }} className={`w-6 h-6 rounded-full border border-black/10 note-color-${c.id} ${selected === c.id ? 'ring-2 ring-indigo-500' : ''}`} title={c.label} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const LabelSelector = ({ currentLabels, onToggle, allLabels }) => {
+            const [show, setShow] = useState(false);
+            return (
+                <div className="relative">
+                    <button className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-full bg-black/5 hover:bg-black/10 transition-colors" onClick={() => setShow(!show)}>
+                        <Icon name="tag" size={14} /> <span>Labels</span>
+                    </button>
+                    {show && (
+                        <div className="absolute bottom-full left-0 mb-2 w-48 glass rounded-xl p-2 z-[60] animate-pop border border-black/5 shadow-xl" onMouseLeave={() => setShow(false)}>
+                            <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                                {allLabels.map(l => (
+                                    <div key={l} className="flex items-center gap-2 px-2 py-1.5 hover:bg-black/10 rounded cursor-pointer" onClick={() => onToggle(l)}>
+                                        <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center ${currentLabels.includes(l) ? 'bg-indigo-500 border-indigo-500' : 'border-gray-500'}`}>
+                                            {currentLabels.includes(l) && <Icon name="check" size={10} className="text-white" />}
                                         </div>
-                                        <span className={item.checked ? 'line-through opacity-50' : ''}>{item.text}</span>
+                                        <span className="text-sm truncate select-none">{l}</span>
                                     </div>
                                 ))}
-                                {remaining > 0 && <div className="text-xs opacity-50 pl-6">+ {remaining} more items</div>}
+                                {allLabels.length === 0 && <div className="text-xs text-gray-500 p-2 text-center">No labels created</div>}
                             </div>
-                        ) : <p className="whitespace-pre-wrap">{note.content}</p>}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const TEXT_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#94a3b8', 'inherit'];
+
+        const TextColorPicker = ({ onSelect }) => {
+            const [show, setShow] = useState(false);
+            return (
+                <div className="relative flex items-center">
+                    <button className="toolbar-btn" onClick={() => setShow(!show)} title="Text Color">
+                        <Icon name="baseline" size={14} />
+                    </button>
+                    {show && (
+                        <div className="absolute top-full left-0 mt-2 glass rounded-xl z-[70] shadow-2xl border border-white/10 text-color-grid" onMouseLeave={() => setShow(false)}>
+                            {TEXT_COLORS.map(c => (
+                                <button key={c} onClick={() => { onSelect('foreColor', c); setShow(false); }}
+                                    className="text-color-item"
+                                    style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}>
+                                    {c === 'inherit' && <Icon name="slash" size={12} className="opacity-40" />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const EMOJIS = ['😀', '😂', '😍', '🤔', '👍', '🔥', '✨', '💡', '📌', '✅', '❌', '📅', '🎉', '🚀', '🔒', '🔑'];
+
+        const EmojiPicker = ({ onSelect }) => {
+            const [show, setShow] = useState(false);
+            return (
+                <div className="relative flex items-center">
+                    <button className="toolbar-btn" onClick={() => setShow(!show)} title="Insert Emoji">
+                        <Icon name="smile" size={14} />
+                    </button>
+                    {show && (
+                        <div className="absolute top-full left-0 mt-2 p-2 glass rounded-xl grid grid-cols-4 gap-1 z-[70] shadow-2xl border border-white/10" onMouseLeave={() => setShow(false)}>
+                            {EMOJIS.map(e => (
+                                <button key={e} onClick={() => { onSelect(e); setShow(false); }} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-lg transition-transform hover:scale-125">
+                                    {e}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const RichToolbar = ({ onFormat, onEmoji }) => (
+            <div className="flex items-center gap-1 p-1 bg-black/5 rounded-lg mb-2">
+                <button className="toolbar-btn" title="Bold" onClick={() => onFormat('bold')}><Icon name="bold" size={14} /></button>
+                <button className="toolbar-btn" title="Italic" onClick={() => onFormat('italic')}><Icon name="italic" size={14} /></button>
+                <button className="toolbar-btn" title="Underline" onClick={() => onFormat('underline')}><Icon name="underline" size={14} /></button>
+                <TextColorPicker onSelect={onFormat} />
+                <div className="w-px h-4 bg-black/10 mx-1" />
+                <EmojiPicker onSelect={onEmoji} />
+            </div>
+        );
+
+        // --- COMPONENTES PRINCIPALES ---
+
+        const NoteCreator = ({ isCreating, setIsCreating, isLightMode, onSave, allLabels, selectedLabel }) => {
+            const [title, setTitle] = useState('');
+            const contentRef = useRef(null);
+            const [items, setItems] = useState([]);
+            const [type, setType] = useState('text');
+            const [color, setColor] = useState('default');
+            const [labels, setLabels] = useState([]);
+
+            useEffect(() => {
+                if (isCreating && selectedLabel) {
+                    setLabels(prev => prev.includes(selectedLabel) ? prev : [...prev, selectedLabel]);
+                }
+            }, [isCreating, selectedLabel]);
+
+            const reset = () => { setTitle(''); if (contentRef.current) contentRef.current.innerHTML = ''; setItems([]); setType('text'); setColor('default'); setLabels([]); };
+            const handleSave = () => {
+                const content = contentRef.current ? contentRef.current.innerHTML : '';
+                if (!title.trim() && !content.trim() && items.length === 0) { setIsCreating(false); return; }
+                onSave({ title, content, items, type, color, labels });
+                reset(); setIsCreating(false);
+            };
+
+            const toggleLabel = (l) => setLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+            const format = (cmd, val) => { document.execCommand(cmd, false, val); if (contentRef.current) contentRef.current.focus(); };
+            const insertEmoji = (emoji) => {
+                if (contentRef.current) {
+                    contentRef.current.focus();
+                    document.execCommand('insertText', false, emoji);
+                }
+            };
+
+            return (
+                <div className="max-w-[600px] mx-auto w-full relative z-10">
+                    <div className={`glass rounded-xl shadow-lg border transition-all duration-300 ${isLightMode ? 'border-gray-200' : 'border-white/10'} ${isCreating ? 'ring-1 ring-black/5 note-color-' + color : ''}`}>
+                        {!isCreating ? (
+                            <div className="p-4 flex items-center justify-between cursor-text" onClick={() => setIsCreating(true)}>
+                                <span className="text-sm font-medium opacity-50">Take a note...</span>
+                                <div className="flex items-center gap-2">
+                                    <button className="p-2 hover:bg-black/5 rounded-full text-gray-400" onClick={(e) => { e.stopPropagation(); setIsCreating(true); setType('checklist'); }}><Icon name="list-checks" size={20} /></button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 space-y-3 animate-pop">
+                                <input autoFocus className="w-full bg-transparent border-none outline-none font-medium text-lg" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
+                                {type === 'text' ? (
+                                    <div className="space-y-1">
+                                        <RichToolbar onFormat={format} onEmoji={insertEmoji} />
+                                        <div ref={contentRef} contentEditable className="rich-content text-sm w-full" data-placeholder="Take a note..." />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {items.map((item, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <Icon name={item.checked ? "check-square" : "square"} size={16} />
+                                                <input className="bg-transparent outline-none flex-1 text-sm" value={item.text} readOnly />
+                                                <button onClick={() => setItems(items.filter((_, i) => i !== idx))}><Icon name="x" size={14} /></button>
+                                            </div>
+                                        ))}
+                                        <input className="w-full bg-transparent outline-none text-sm border-t border-black/5 pt-2" placeholder="List item" onKeyDown={e => {
+                                            if (e.key === 'Enter' && e.target.value.trim()) {
+                                                setItems([...items, { text: e.target.value.trim(), checked: false }]);
+                                                e.target.value = '';
+                                            }
+                                        }} />
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <ColorPickerBtn selected={color} onSelect={setColor} colors={NOTE_COLORS} />
+                                        <LabelSelector currentLabels={labels} onToggle={toggleLabel} allLabels={allLabels} />
+                                        <button className="p-2 hover:bg-black/5 rounded-full opacity-60" title="Toggle List" onClick={() => setType(type === 'text' ? 'checklist' : 'text')}>
+                                            <Icon name={type === 'text' ? "list" : "type"} size={18} />
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="px-4 py-1.5 text-sm font-medium hover:bg-black/5 rounded-lg" onClick={() => { reset(); setIsCreating(false); }}>Cancel</button>
+                                        <button className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-md" onClick={handleSave}>Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
+                </div>
+            );
+        };
+
+        const EditorModal = ({ note, onClose, onSave, onDelete, allLabels }) => {
+            const [title, setTitle] = useState(note.title || '');
+            const contentRef = useRef(null);
+            const [items, setItems] = useState(note.items || []);
+            const [color, setColor] = useState(note.color || 'default');
+            const [labels, setLabels] = useState(note.labels || []);
+            const [type, setType] = useState(note.type || 'text');
+            const [pinned, setPinned] = useState(note.pinned || false);
+            const listRef = useRef(null);
+
+            useEffect(() => {
+                if (type === 'text' && contentRef.current) {
+                    contentRef.current.innerHTML = note.content || '';
+                }
+                if (type === 'checklist' && listRef.current) {
+                    new Sortable(listRef.current, {
+                        animation: 150,
+                        handle: '.drag-handle',
+                        onEnd: (evt) => {
+                            const newItems = [...items];
+                            const [moved] = newItems.splice(evt.oldIndex, 1);
+                            newItems.splice(evt.newIndex, 0, moved);
+                            setItems(newItems);
+                        }
+                    });
+                }
+            }, [note, type]);
+
+            const handleSave = () => { onSave({ ...note, title, content: contentRef.current ? contentRef.current.innerHTML : '', items, color, labels, type, pinned }); onClose(); };
+            const toggleLabel = (l) => setLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+            const format = (cmd, val) => { document.execCommand(cmd, false, val); if (contentRef.current) contentRef.current.focus(); };
+            const insertEmoji = (emoji) => {
+                if (contentRef.current) {
+                    contentRef.current.focus();
+                    document.execCommand('insertText', false, emoji);
+                }
+            };
+
+            const handleLock = () => {
+                if (note.locked) {
+                    if (confirm("Remove password lock?")) onSave({ ...note, locked: false, password: '' });
+                } else {
+                    const pass = prompt("Enter password to lock this note:");
+                    if (pass) onSave({ ...note, locked: true, password: pass });
+                }
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    onMouseDown={(e) => { if (e.target === e.currentTarget) handleSave(); }}>
+                    <div className={`glass max-w-2xl w-full rounded-2xl p-6 space-y-4 animate-pop shadow-2xl note-color-${color || 'default'} border border-white/10`} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center opacity-40 text-[10px] font-bold uppercase tracking-widest pb-2">
+                            <span>Editing Note</span>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setPinned(!pinned)} className={pinned ? "text-indigo-500" : ""}><Icon name="pin" size={14} /></button>
+                                <span>{type}</span>
+                            </div>
+                        </div>
+                        <input className="w-full bg-transparent border-none outline-none font-bold text-xl" value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" />
+                        {type === 'text' ? (
+                            <div className="space-y-1">
+                                <RichToolbar onFormat={format} onEmoji={insertEmoji} />
+                                <div ref={contentRef} contentEditable className="rich-content min-h-[200px] text-base w-full overflow-y-auto" />
+                            </div>
+                        ) : (
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar" ref={listRef}>
+                                {items.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 group/item">
+                                        <div className="drag-handle opacity-0 group-hover/item:opacity-30 cursor-grab"><Icon name="grip-vertical" size={14} /></div>
+                                        <button onClick={() => { const n = [...items]; n[idx].checked = !n[idx].checked; setItems(n); }}><Icon name={item.checked ? "check-square" : "square"} /></button>
+                                        <input className="bg-transparent outline-none flex-1" value={item.text} onChange={e => { const n = [...items]; n[idx].text = e.target.value; setItems(n); }} />
+                                        <button onClick={() => setItems(items.filter((_, i) => i !== idx))} className="opacity-0 group-hover/item:opacity-100"><Icon name="trash-2" size={16} /></button>
+                                    </div>
+                                ))}
+                                <button className="flex items-center gap-2 opacity-50 text-sm pl-6" onClick={() => setItems([...items, { text: '', checked: false }])}><Icon name="plus" size={14} /> Add item</button>
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between pt-4 border-t border-black/5">
+                            <div className="flex items-center gap-3">
+                                <ColorPickerBtn selected={color} onSelect={setColor} colors={NOTE_COLORS} />
+                                <LabelSelector currentLabels={labels} onToggle={toggleLabel} allLabels={allLabels} />
+                                <button className={`p-2 ${note.locked ? 'text-indigo-400' : 'text-gray-400'}`} onClick={handleLock} title="Lock Note"><Icon name={note.locked ? "lock" : "unlock"} /></button>
+                                <button className="p-2 text-red-400" onClick={() => onDelete(note.id)}><Icon name="trash-2" /></button>
+                            </div>
+                            <button className="px-6 py-2 text-sm font-bold rounded-xl hover:bg-black/5 transition-colors opacity-70 hover:opacity-100" onClick={handleSave}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const NoteCard = ({ note, onEdit, onTogglePin, onToggleCheck }) => {
+            const rowSpan = useMemo(() => {
+                let contentLen = (note.title?.length || 0);
+                if (note.locked) return 8;
+                if (note.type === 'checklist' && note.items) {
+                    contentLen += Math.min(note.items.length, 6) * 40;
+                } else {
+                    contentLen += Math.min(note.content?.length || 0, 280);
+                }
+                return Math.max(Math.ceil(contentLen / 40) + 6, 8);
+            }, [note]);
+
+            return (
+                <div data-id={note.id} className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-2 cursor-pointer break-inside-avoid shadow-sm overflow-hidden`}
+                    style={{ gridRowEnd: `span ${rowSpan}` }} onClick={() => onEdit(note)}>
+                    <div className="flex justify-between items-start">
+                        <h3 className={`font-bold text-sm lg:text-base leading-tight w-full pr-6 line-clamp-2 ${!note.title ? 'text-current' : ''}`}>
+                            {note.title || formatDate(note.id)}
+                        </h3>
+                        <button className={`absolute top-3 right-3 p-1.5 rounded-full transition-all z-10 ${note.pinned ? 'opacity-100 bg-indigo-500/10' : 'opacity-0 group-hover:opacity-100 hover:bg-black/10'}`}
+                            onClick={e => { e.stopPropagation(); onTogglePin(note); }}>
+                            <Icon name="pin" size={14} className={note.pinned ? "text-indigo-500 fill-indigo-500" : "text-gray-400"} />
+                        </button>
+                    </div>
+                    {note.locked ? (
+                        <div className="flex-1 flex flex-col items-center justify-center opacity-30 gap-2">
+                            <Icon name="lock" size={24} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Locked Note</span>
+                        </div>
+                    ) : (
+                        <div className="text-xs lg:text-sm leading-relaxed overflow-hidden">
+                            {note.type === 'checklist' ? (
+                                <div className="space-y-1">
+                                    {(note.items || []).slice(0, 6).map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-2" onClick={e => { e.stopPropagation(); onToggleCheck(note.id, idx); }}>
+                                            <div className={`w-3 h-3 border rounded-sm flex items-center justify-center ${item.checked ? 'bg-current' : 'border-current opacity-40'}`}>
+                                                {item.checked && <Icon name="check" size={8} className="stroke-[4]" />}
+                                            </div>
+                                            <span className={`truncate ${item.checked ? 'line-through opacity-50' : ''}`}>{item.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : <div className="rich-preview" dangerouslySetInnerHTML={{ __html: note.content?.length > 280 ? note.content.substring(0, 280) + '...' : note.content }} />}
+                        </div>
+                    )}
                     {note.labels?.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                             {note.labels.map(L => <span key={L} className="px-2 py-0.5 bg-black/5 dark:bg-black/20 rounded-full text-[10px] font-bold uppercase tracking-wider opacity-60">{L}</span>)}
@@ -294,7 +393,7 @@
             );
         };
 
-        const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, onAddLabel, deferredPrompt, onInstall }) => {
+        const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, onAddLabel, onRenameLabel, onDeleteLabel, deferredPrompt, onInstall }) => {
             const [newLabel, setNewLabel] = useState('');
             return (
                 <React.Fragment>
@@ -309,8 +408,21 @@
                                 <Icon name="lightbulb" size={20} /> <span className="font-medium">Notes</span>
                             </div>
                             {labels.map(l => (
-                                <div key={l} className={`px-6 py-3 flex items-center gap-4 cursor-pointer hover:bg-black/5 border-l-4 ${selectedLabel === l ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(l); onClose(); }}>
-                                    <Icon name="tag" size={20} /> <span className="font-medium truncate">{l}</span>
+                                <div key={l} className={`group px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-black/5 border-l-4 ${selectedLabel === l ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(l); onClose(); }}>
+                                    <div className="flex items-center gap-4 truncate">
+                                        <Icon name="tag" size={20} /> <span className="font-medium truncate">{l}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button className="p-1 hover:bg-black/10 rounded" onClick={(e) => {
+                                            e.stopPropagation();
+                                            const newVal = prompt("Rename label to:", l);
+                                            if (newVal && newVal.trim() && newVal !== l) onRenameLabel(l, newVal.trim());
+                                        }}><Icon name="edit-2" size={14} /></button>
+                                        <button className="p-1 hover:bg-red-500/10 text-red-500 rounded" onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (confirm(`Delete label "${l}" from all notes?`)) onDeleteLabel(l);
+                                        }}><Icon name="trash-2" size={14} /></button>
+                                    </div>
                                 </div>
                             ))}
                             <div className="px-6 py-3 border-t border-white/10 mt-2">
@@ -338,18 +450,14 @@
             const [tempName, setTempName] = useState(vaultName);
             const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
             const [tempLabel, setTempLabel] = useState(localLabel);
-            const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '' });
+            const [showAdvancedSync, setShowAdvancedSync] = useState(false);
+            const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
             const [resetPhrase, setResetPhrase] = useState('');
 
-            useEffect(() => {
-                if (isOpen) {
-                    setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '' });
-                }
-            }, [isOpen]);
-
+            useEffect(() => { if (isOpen) setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true }); }, [isOpen]);
             if (!isOpen) return null;
 
-            const applyEncryption = () => { Database.configure(pendingEncConfig); alert("Applied."); };
+            const applyEncryption = () => { Database.configure(pendingEncConfig); alert("Encryption Settings Applied."); };
             const handleConnect = () => { Database.setNodeLabel(tempLabel); setVaultName(tempName); toggleSync(true, tempName, tempPass); };
             const handleReset = () => { if (resetPhrase.toLowerCase() === 'reset') { localStorage.clear(); window.location.reload(); } };
 
@@ -362,49 +470,165 @@
                                 <Icon name={view === 'MAIN' ? "x" : "arrow-left"} size={20} />
                             </button>
                         </div>
-                        <div className="p-6">
+                        <div className="p-6 custom-scrollbar max-h-[70vh] overflow-y-auto">
                             {view === 'MAIN' && (
                                 <div className="space-y-4">
                                     <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={toggleTheme}>
                                         <div className="flex items-center gap-3"><Icon name={isLightMode ? "sun" : "moon"} /> Appearance</div>
-                                        <div className={`w-10 h-5 rounded-full relative ${isLightMode ? 'bg-indigo-500' : 'bg-gray-600'}`}>
-                                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isLightMode ? 'left-5.5' : 'left-0.5'}`} />
+                                        <div className={`w-10 h-5 rounded-full relative transition-colors ${!isLightMode ? 'bg-indigo-500' : 'bg-gray-400 opacity-50'}`}>
+                                            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow-sm ${!isLightMode ? 'left-[1.5rem]' : 'left-0.5'}`} />
                                         </div>
                                     </div>
-                                    {['SYNC', 'SECURITY', 'DATA', 'RESET'].map(v => (
-                                        <div key={v} className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView(v)}>
-                                            <span className="capitalize">{v.toLowerCase()}</span> <Icon name="chevron-right" size={16} />
-                                        </div>
-                                    ))}
+                                    <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SYNC')}>
+                                        <div className="flex items-center gap-3"><Icon name="refresh-cw" className={isSyncActive ? "text-green-400" : ""} /> Synchronization</div>
+                                        <Icon name="chevron-right" size={16} />
+                                    </div>
+                                    <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SECURITY')}>
+                                        <div className="flex items-center gap-3"><Icon name="lock" /> Security & Encryption</div>
+                                        <Icon name="chevron-right" size={16} />
+                                    </div>
+                                    <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('DATA')}>
+                                        <div className="flex items-center gap-3"><Icon name="hard-drive" /> Backup & Data</div>
+                                        <Icon name="chevron-right" size={16} />
+                                    </div>
+                                    <div className="p-4 bg-red-500/5 rounded-2xl flex items-center justify-between cursor-pointer border border-red-500/10" onClick={() => setView('RESET')}>
+                                        <div className="flex items-center gap-3 text-red-400"><Icon name="trash-2" /> Reset Application</div>
+                                        <Icon name="chevron-right" size={16} className="text-red-400" />
+                                    </div>
                                 </div>
                             )}
                             {view === 'SECURITY' && (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm outline-none" value={pendingEncConfig.storageAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageAlgo: e.target.value })}>
-                                            <option value="NONE">No Encryption</option>
-                                            <option value="AES">AES-256</option>
-                                        </select>
-                                        <input type="password" placeholder="Key" className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageKey: e.target.value })} />
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] uppercase font-bold text-gray-400">Local Storage</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageAlgo: e.target.value })}>
+                                                <option value="NONE">None</option>
+                                                <option value="AES">AES-256</option>
+                                                <option value="AESQ">AES-Q (Post-Quantum)</option>
+                                                <option value="RABBIT">Rabbit</option>
+                                                <option value="RC4">RC4</option>
+                                            </select>
+                                            <input type="password" placeholder="Key" className="bg-black/20 p-3 rounded-xl border border-white/5" value={pendingEncConfig.storageKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageKey: e.target.value })} />
+                                        </div>
                                     </div>
-                                    <button onClick={applyEncryption} className="w-full py-3 bg-indigo-600 rounded-xl font-bold">Apply Changes</button>
+                                    <button onClick={applyEncryption} className="w-full py-3 bg-indigo-600 rounded-xl font-bold">Apply Security Changes</button>
                                 </div>
                             )}
                             {view === 'SYNC' && (
                                 <div className="space-y-4">
-                                    <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Your Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
-                                    <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Vault Name" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
-                                    <button onClick={isSyncActive ? () => toggleSync(false) : handleConnect} className={`w-full py-3 rounded-xl font-bold ${isSyncActive ? 'bg-red-500/20 text-red-400' : 'bg-indigo-600'}`}>
-                                        {isSyncActive ? 'Disconnect' : 'Connect'}
+                                    <div className="space-y-3">
+                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Your Device Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
+                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Network Name" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
+                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" type="password" placeholder="Network Password" value={tempPass} onChange={e => setTempPass(e.target.value)} disabled={isSyncActive} />
+                                    </div>
+
+                                    <div className="p-4 bg-white/5 rounded-2xl">
+                                        <button onClick={() => setShowAdvancedSync(!showAdvancedSync)} className="w-full flex items-center justify-between text-sm font-medium">
+                                            <div className="flex items-center gap-2"><Icon name="settings-2" size={16} /> Advanced Sync Settings</div>
+                                            <Icon name={showAdvancedSync ? "chevron-up" : "chevron-down"} size={16} />
+                                        </button>
+
+                                        {showAdvancedSync && (
+                                            <div className="mt-4 space-y-4 animate-slideDown">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase font-bold text-gray-500">P2P Encryption</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <select className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncAlgo: e.target.value })}>
+                                                            <option value="NONE">None</option>
+                                                            <option value="AES">AES-256</option>
+                                                            <option value="AESQ">AES-Q (Post-Quantum)</option>
+                                                            <option value="RABBIT">Rabbit</option>
+                                                            <option value="RC4">RC4</option>
+                                                        </select>
+                                                        <input type="password" placeholder="Sync Key" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncKey: e.target.value })} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase font-bold text-gray-500">Custom PeerJS Server</label>
+                                                    <input placeholder="Host (e.g. 0.peerjs.com)" className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pHost || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pHost: e.target.value })} />
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <input placeholder="Port" type="number" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPort || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPort: parseInt(e.target.value) || 443 })} />
+                                                        <input placeholder="Path" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPath || '/'} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPath: e.target.value })} />
+                                                    </div>
+                                                    <label className="flex items-center gap-2 cursor-pointer pt-1">
+                                                        <input type="checkbox" checked={pendingEncConfig.p2pSecure !== false} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pSecure: e.target.checked })} className="accent-indigo-500" />
+                                                        <span className="text-xs text-gray-400">Use SSL (Secure)</span>
+                                                    </label>
+                                                </div>
+                                                <button onClick={applyEncryption} className="w-full py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 rounded-lg text-xs font-bold transition-colors">Apply Sync Changes</button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button onClick={isSyncActive ? () => toggleSync(false) : handleConnect} className={`w-full py-3 rounded-xl font-bold ${isSyncActive ? 'bg-red-500/20 text-red-400' : 'bg-indigo-600 shadow-lg shadow-indigo-600/20'}`}>
+                                        {isSyncActive ? 'Disconnect' : 'Connect to Grid'}
                                     </button>
+                                    {isSyncActive && (
+                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl space-y-2">
+                                            <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest flex items-center justify-between">
+                                                <span>Connected Nodes</span>
+                                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                            </div>
+                                            <div className="text-xs space-y-1">
+                                                <div className="flex items-center gap-2"><Icon name="cpu" size={12} className="opacity-50" /> <span className="opacity-50">{tempLabel} (This Device)</span></div>
+                                                {peers.map(p => <div key={p.id} className="flex items-center gap-2"><Icon name="monitor" size={12} className="text-green-500/50" /> <span>{p.label}</span></div>)}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             {view === 'DATA' && (
                                 <div className="space-y-3">
-                                    <button onClick={onExport} className="w-full py-3 bg-white/5 rounded-xl border border-white/5">Export JSON</button>
+                                    <button onClick={() => {
+                                        const exportData = {
+                                            vault: vaultName,
+                                            config: Database.config,
+                                            payload: localStorage.getItem(Database.storageKeyPath)
+                                        };
+                                        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `keep_mesh_${vaultName}_${new Date().toISOString().split('T')[0]}.json`;
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                    }} className="w-full py-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center gap-2">
+                                        <Icon name="download" /> Export Encrypted Backup
+                                    </button>
                                     <div className="relative">
-                                        <button className="w-full py-3 bg-white/5 rounded-xl border border-white/5">Import JSON</button>
-                                        <input type="file" accept=".json" onChange={onImport} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                        <button className="w-full py-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center gap-2">
+                                            <Icon name="upload" /> Import Backup
+                                        </button>
+                                        <input type="file" accept=".json" onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                                try {
+                                                    const imported = JSON.parse(event.target.result);
+                                                    if (!imported.payload) throw new Error("Invalid backup format");
+                                                    let decryptedPayload = null;
+                                                    const algo = imported.config?.storageAlgo || 'NONE';
+                                                    if (algo !== 'NONE') {
+                                                        const pass = prompt(`Enter password for ${algo} decryption:`);
+                                                        if (!pass) return;
+                                                        decryptedPayload = CryptoLayer.decrypt(imported.payload, algo, pass);
+                                                    } else { decryptedPayload = JSON.parse(imported.payload); }
+                                                    if (decryptedPayload) {
+                                                        if (confirm("Data decrypted successfully. Overwrite local vault?")) {
+                                                            Database.config = imported.config;
+                                                            Database.addSet = decryptedPayload.addSet || {};
+                                                            Database.removeSet = decryptedPayload.removeSet || {};
+                                                            Database.save();
+                                                            window.location.reload();
+                                                        }
+                                                    } else { alert("Decryption failed. Incorrect password or corrupt file."); }
+                                                } catch (err) { alert("Error importing file: " + err.message); }
+                                            };
+                                            reader.readAsText(file);
+                                        }} className="absolute inset-0 opacity-0 cursor-pointer" />
                                     </div>
                                 </div>
                             )}
@@ -421,20 +645,37 @@
             );
         };
 
-        // --- MAIN APP ---
-
         const App = () => {
             const [notes, setNotes] = useState([]);
+            const [selectedNote, setSelectedNote] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [selectedLabel, setSelectedLabel] = useState(null);
             const [searchQuery, setSearchQuery] = useState('');
             const [showSettings, setShowSettings] = useState(false);
             const [isLightMode, setIsLightMode] = useState(localStorage.getItem('theme') === 'light');
-            const [isSyncActive, setIsSyncActive] = useState(localStorage.getItem('theme_sync') === 'true');
+            const [isSyncActive, setIsSyncActive] = useState(false);
             const [vaultName, setVaultName] = useState(localStorage.getItem('mesh_vault_name') || 'MainVault');
             const [isCreating, setIsCreating] = useState(false);
+            const [labels, setLabels] = useState([]);
             const [peers, setPeers] = useState([]);
             const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+            const masonryRef = useRef(null);
+            const sortableInstance = useRef(null);
+
+            const filtered = useMemo(() => {
+                return notes
+                    .filter(n => {
+                        const matchL = !selectedLabel || n.labels?.includes(selectedLabel);
+                        const matchS = !searchQuery || JSON.stringify(n).toLowerCase().includes(searchQuery.toLowerCase());
+                        return matchL && matchS;
+                    })
+                    .sort((a, b) => {
+                        if (a.pinned && !b.pinned) return -1;
+                        if (!a.pinned && b.pinned) return 1;
+                        return b.id - a.id;
+                    });
+            }, [notes, selectedLabel, searchQuery]);
 
             useEffect(() => {
                 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); setDeferredPrompt(e); });
@@ -445,8 +686,23 @@
             }, []);
 
             useEffect(() => {
+                if (masonryRef.current) {
+                    if (sortableInstance.current) sortableInstance.current.destroy();
+                    sortableInstance.current = new Sortable(masonryRef.current, {
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        onEnd: (evt) => {
+                            // Logic to save order if needed in the future
+                        }
+                    });
+                }
+            }, [filtered.length, selectedLabel]);
+
+            useEffect(() => {
                 document.body.className = isLightMode ? 'light-theme' : '';
+                localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
             }, [isLightMode]);
+            useEffect(() => { setLabels([...new Set(notes.flatMap(n => n.labels || []))].sort()); }, [notes]);
 
             const toggleSync = (active, name, pass) => {
                 if (active) {
@@ -454,6 +710,7 @@
                         setPeers(Array.from(Hub.conns.entries()).map(([id, info]) => ({ id, label: info.label })));
                         setIsSyncActive(true);
                         localStorage.setItem('mesh_sync_active', 'true');
+                        localStorage.setItem('mesh_vault_pass', pass || '');
                     });
                 } else {
                     if (Hub.peer) Hub.peer.destroy();
@@ -462,76 +719,117 @@
                 }
             };
 
+            const handleUnlock = (note) => {
+                if (!note.locked) { setSelectedNote(note); return; }
+                const pass = prompt("This note is locked. Enter password:");
+                if (pass === note.password) setSelectedNote(note);
+                else if (pass) alert("Incorrect password.");
+            };
+
+            const handleDeleteLocked = (id) => {
+                const note = notes.find(n => n.id === id);
+                if (note && note.locked) {
+                    const pass = prompt("Delete locked note? Enter password:");
+                    if (pass !== note.password) { alert("Incorrect password."); return; }
+                }
+                deleteNote(id);
+            };
+
             const upsert = (data) => {
-                Database.upsert(data.id || Date.now(), data);
-                if (isSyncActive) Hub.broadcast();
+                const id = data.id || Date.now();
+                const ts = Date.now();
+                Database.upsert(id, data);
+                if (isSyncActive) Hub.broadcast({ addSet: { [id]: { data, ts } } });
                 setNotes(Database.getAll());
             };
 
-            const filtered = useMemo(() => {
-                return notes.filter(n => {
-                    const matchLabel = !selectedLabel || n.labels?.includes(selectedLabel);
-                    const matchSearch = !searchQuery || JSON.stringify(n).toLowerCase().includes(searchQuery.toLowerCase());
-                    return matchLabel && matchSearch;
+            const toggleCheck = (id, idx) => {
+                const note = notes.find(n => n.id === id);
+                if (!note) return;
+                const newItems = [...note.items];
+                newItems[idx].checked = !newItems[idx].checked;
+                const ts = Date.now();
+                Database.upsert(id, { ...note, items: newItems });
+                if (isSyncActive) Hub.broadcast({ addSet: { [id]: { data: { ...note, items: newItems }, ts } } });
+                setNotes(Database.getAll());
+            };
+
+            const deleteNote = (id) => {
+                const ts = Date.now();
+                Database.delete(id);
+                if (isSyncActive) Hub.broadcast({ removeSet: { [id]: ts } });
+                setNotes(Database.getAll());
+                setSelectedNote(null);
+            };
+
+            const renameLabel = (oldName, newName) => {
+                const affected = notes.filter(n => n.labels?.includes(oldName));
+                affected.forEach(n => {
+                    const newLabels = n.labels.map(l => l === oldName ? newName : l);
+                    upsert({ ...n, labels: newLabels });
                 });
-            }, [notes, selectedLabel, searchQuery]);
+                if (selectedLabel === oldName) setSelectedLabel(newName);
+            };
+
+            const deleteLabel = (name) => {
+                const affected = notes.filter(n => n.labels?.includes(name));
+                affected.forEach(n => {
+                    const newLabels = n.labels.filter(l => l !== name);
+                    upsert({ ...n, labels: newLabels });
+                });
+                if (selectedLabel === name) setSelectedLabel(null);
+            };
+
 
             return (
                 <div className="min-h-screen pt-20 pb-10">
                     <header className="h-16 px-4 flex items-center gap-2 border-b border-white/5 fixed top-0 left-0 right-0 z-40 glass">
                         <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-black/10 rounded-full shrink-0"><Icon name="menu" /></button>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-yellow-900 shadow-sm">
-                                <Icon name="sticky-note" size={18} />
-                            </div>
+                        <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => setSelectedLabel(null)}>
+                            <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center text-yellow-900 shadow-sm"><Icon name="sticky-note" size={18} /></div>
                             <h1 className="text-lg font-bold truncate hidden lg:block">{selectedLabel || 'Keep Mesh'}</h1>
                         </div>
-
                         <div className="bg-gray-500/10 focus-within:bg-gray-500/20 rounded-lg flex-1 max-w-xl flex items-center px-3 h-10 transition-colors mx-1 min-w-0">
                             <Icon name="search" size={16} className="text-gray-400 shrink-0" />
                             <input className="bg-transparent border-none outline-none px-2 text-sm flex-1 min-w-0" placeholder="Search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
-
-                        <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-black/10 rounded-full shrink-0"><Icon name="settings" /></button>
+                        <button onClick={() => setShowSettings(true)} className="ml-auto p-2 hover:bg-black/10 rounded-full shrink-0"><Icon name="settings" /></button>
                     </header>
 
-                    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} labels={[...new Set(notes.flatMap(n => n.labels || []))]}
-                        selectedLabel={selectedLabel} onSelectLabel={setSelectedLabel} isLightMode={isLightMode} onAddLabel={() => { }}
+                    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} labels={labels}
+                        selectedLabel={selectedLabel} onSelectLabel={setSelectedLabel} isLightMode={isLightMode}
+                        onAddLabel={(l) => setLabels(prev => [...new Set([...prev, l])].sort())}
+                        onRenameLabel={renameLabel} onDeleteLabel={deleteLabel}
                         deferredPrompt={deferredPrompt} onInstall={() => deferredPrompt.prompt()} />
 
                     <main className="max-w-4xl mx-auto px-4 space-y-6">
-                        <div className="glass p-4 rounded-xl border border-white/10" onClick={() => { if (!isCreating) setIsCreating(true); }}>
-                            {!isCreating ? <div className="text-sm opacity-50">Take a note...</div> : (
-                                <div className="space-y-4">
-                                    <input className="w-full bg-transparent font-bold text-lg outline-none" placeholder="Title" id="n-title" />
-                                    <textarea className="w-full bg-transparent outline-none text-sm min-h-[100px]" placeholder="Content" id="n-content" />
-                                    <div className="flex justify-end gap-2">
-                                        <button onClick={() => setIsCreating(false)}>Cancel</button>
-                                        <button className="px-4 py-2 bg-indigo-600 rounded-lg font-bold" onClick={() => {
-                                            upsert({ title: document.getElementById('n-title').value, content: document.getElementById('n-content').value });
-                                            setIsCreating(false);
-                                        }}>Save</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="masonry">
-                            {filtered.map(n => <NoteCard key={n.id} note={n} onEdit={() => { }} onTogglePin={() => { }} onToggleCheck={() => { }} />)}
+                        <NoteCreator isCreating={isCreating} setIsCreating={setIsCreating} isLightMode={isLightMode} onSave={upsert} allLabels={labels} selectedLabel={selectedLabel} />
+                        <div className="masonry" ref={masonryRef}>
+                            {filtered.map(n => <NoteCard key={n.id} note={n} onEdit={() => handleUnlock(n)} onTogglePin={(n) => upsert({ ...n, pinned: !n.pinned })} onToggleCheck={toggleCheck} />)}
                         </div>
                     </main>
+
+                    {selectedNote && <EditorModal note={selectedNote} onClose={() => setSelectedNote(null)} onSave={upsert} onDelete={handleDeleteLocked} allLabels={labels} />}
 
                     <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} isLightMode={isLightMode}
                         toggleTheme={() => setIsLightMode(!isLightMode)} isSyncActive={isSyncActive} toggleSync={toggleSync}
                         vaultName={vaultName} setVaultName={setVaultName} peers={peers} localLabel={Database.nodeLabel}
-                        onExport={() => alert(JSON.stringify(Database.getPayload()))} onImport={() => { }} />
+                    />
                 </div>
             );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+
+        // Registro de Service Worker para soporte PWA (solo en HTTPS/Localhost)
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Registration failed', err));
+            });
+        }
     </script>
 </body>
 

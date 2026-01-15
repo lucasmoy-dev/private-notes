@@ -1,0 +1,584 @@
+const { useState, useEffect, useRef, useMemo } = React;
+const NOTE_COLORS = [
+    { id: 'default', label: 'Default' },
+    { id: 'red', label: 'Red' },
+    { id: 'orange', label: 'Orange' },
+    { id: 'yellow', label: 'Yellow' },
+    { id: 'green', label: 'Green' },
+    { id: 'teal', label: 'Teal' },
+    { id: 'blue', label: 'Blue' },
+    { id: 'darkblue', label: 'Dark Blue' },
+    { id: 'purple', label: 'Purple' },
+    { id: 'pink', label: 'Pink' },
+    { id: 'brown', label: 'Brown' },
+    { id: 'gray', label: 'Gray' }
+];
+
+// --- UI COMPONENTS ---
+
+const Icon = ({ name, size = 20, className = "", onClick, style = {} }) => {
+    useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+    return <i data-lucide={name} className={className}
+        style={{ width: size, height: size, cursor: onClick ? 'pointer' : 'default', ...style }}
+        onClick={onClick} />;
+};
+
+const ColorPickerBtn = ({ selected, onSelect, colors }) => {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative">
+            <button className={`p-1.5 rounded-full border border-black/10 note-color-${selected}`} onClick={() => setShow(!show)}>
+                <Icon name="palette" size={16} />
+            </button>
+            {show && (
+                <div className="absolute bottom-full left-0 mb-2 p-2 glass rounded-xl grid grid-cols-4 gap-2 z-[60] animate-pop shadow-xl w-40" onMouseLeave={() => setShow(false)}>
+                    {colors.map(c => (
+                        <button key={c.id} onClick={() => { onSelect(c.id); setShow(false); }} className={`w-6 h-6 rounded-full border border-black/10 note-color-${c.id} ${selected === c.id ? 'ring-2 ring-indigo-500' : ''}`} title={c.label} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const LabelSelector = ({ currentLabels, onToggle, allLabels }) => {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative">
+            <button className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-full bg-black/5 hover:bg-black/10 transition-colors" onClick={() => setShow(!show)}>
+                <Icon name="tag" size={14} /> <span>Labels</span>
+            </button>
+            {show && (
+                <div className="absolute bottom-full left-0 mb-2 w-48 glass rounded-xl p-2 z-[60] animate-pop border border-black/5 shadow-xl" onMouseLeave={() => setShow(false)}>
+                    <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                        {allLabels.map(l => (
+                            <div key={l} className="flex items-center gap-2 px-2 py-1.5 hover:bg-black/10 rounded cursor-pointer" onClick={() => onToggle(l)}>
+                                <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center ${currentLabels.includes(l) ? 'bg-indigo-500 border-indigo-500' : 'border-gray-500'}`}>
+                                    {currentLabels.includes(l) && <Icon name="check" size={10} className="text-white" />}
+                                </div>
+                                <span className="text-sm truncate select-none">{l}</span>
+                            </div>
+                        ))}
+                        {allLabels.length === 0 && <div className="text-xs text-gray-500 p-2 text-center">No labels created</div>}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const TEXT_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#94a3b8', 'inherit'];
+
+const TextColorPicker = ({ onSelect }) => {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative flex items-center">
+            <button className="toolbar-btn" onClick={() => setShow(!show)} title="Text Color">
+                <Icon name="baseline" size={14} />
+            </button>
+            {show && (
+                <div className="absolute top-full left-0 mt-1 p-2 glass rounded-lg grid grid-cols-5 gap-1 z-[70] shadow-xl border border-black/5" onMouseLeave={() => setShow(false)}>
+                    {TEXT_COLORS.map(c => (
+                        <button key={c} onClick={() => { onSelect('foreColor', c); setShow(false); }}
+                            className="w-5 h-5 rounded-sm border border-black/10 hover:scale-110 transition-transform"
+                            style={{ backgroundColor: c === 'inherit' ? 'transparent' : c }}>
+                            {c === 'inherit' && <Icon name="slash" size={10} className="opacity-40" />}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const RichToolbar = ({ onFormat }) => (
+    <div className="flex items-center gap-1 p-1 bg-black/5 rounded-lg mb-2">
+        <button className="toolbar-btn" title="Bold" onClick={() => onFormat('bold')}><Icon name="bold" size={14} /></button>
+        <button className="toolbar-btn" title="Italic" onClick={() => onFormat('italic')}><Icon name="italic" size={14} /></button>
+        <button className="toolbar-btn" title="Underline" onClick={() => onFormat('underline')}><Icon name="underline" size={14} /></button>
+        <TextColorPicker onSelect={onFormat} />
+    </div>
+);
+
+const NoteCreator = ({ isCreating, setIsCreating, isLightMode, onSave, allLabels, selectedLabel }) => {
+    const [title, setTitle] = useState('');
+    const contentRef = useRef(null);
+    const [items, setItems] = useState([]);
+    const [type, setType] = useState('text');
+    const [color, setColor] = useState('default');
+    const [labels, setLabels] = useState([]);
+
+    useEffect(() => {
+        if (isCreating && selectedLabel) {
+            setLabels(prev => prev.includes(selectedLabel) ? prev : [...prev, selectedLabel]);
+        }
+    }, [isCreating, selectedLabel]);
+
+    const reset = () => { setTitle(''); if (contentRef.current) contentRef.current.innerHTML = ''; setItems([]); setType('text'); setColor('default'); setLabels([]); };
+    const handleSave = () => {
+        const content = contentRef.current ? contentRef.current.innerHTML : '';
+        if (!title.trim() && !content.trim() && items.length === 0) { setIsCreating(false); return; }
+        onSave({ title, content, items, type, color, labels });
+        reset(); setIsCreating(false);
+    };
+
+    const toggleLabel = (l) => setLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+    const format = (cmd, val) => { document.execCommand(cmd, false, val); if (contentRef.current) contentRef.current.focus(); };
+
+    return (
+        <div className="max-w-[600px] mx-auto w-full relative z-10">
+            <div className={`glass rounded-xl shadow-lg border transition-all duration-300 ${isLightMode ? 'border-gray-200' : 'border-white/10'} ${isCreating ? 'ring-1 ring-black/5 note-color-' + color : ''}`}>
+                {!isCreating ? (
+                    <div className="p-4 flex items-center justify-between cursor-text" onClick={() => setIsCreating(true)}>
+                        <span className="text-sm font-medium opacity-50">Take a note...</span>
+                        <div className="flex items-center gap-2">
+                            <button className="p-2 hover:bg-black/5 rounded-full text-gray-400" onClick={(e) => { e.stopPropagation(); setIsCreating(true); setType('checklist'); }}><Icon name="list-checks" size={20} /></button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="p-4 space-y-3 animate-pop">
+                        <input autoFocus className="w-full bg-transparent border-none outline-none font-medium text-lg" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
+                        {type === 'text' ? (
+                            <div className="space-y-1">
+                                <RichToolbar onFormat={format} />
+                                <div ref={contentRef} contentEditable className="rich-content text-sm w-full" data-placeholder="Take a note..." />
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {items.map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <Icon name={item.checked ? "check-square" : "square"} size={16} />
+                                        <input className="bg-transparent outline-none flex-1 text-sm" value={item.text} readOnly />
+                                        <button onClick={() => setItems(items.filter((_, i) => i !== idx))}><Icon name="x" size={14} /></button>
+                                    </div>
+                                ))}
+                                <input className="w-full bg-transparent outline-none text-sm border-t border-black/5 pt-2" placeholder="List item" onKeyDown={e => {
+                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                        setItems([...items, { text: e.target.value.trim(), checked: false }]);
+                                        e.target.value = '';
+                                    }
+                                }} />
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center gap-2">
+                                <ColorPickerBtn selected={color} onSelect={setColor} colors={NOTE_COLORS} />
+                                <LabelSelector currentLabels={labels} onToggle={toggleLabel} allLabels={allLabels} />
+                                <button className="p-2 hover:bg-black/5 rounded-full opacity-60" title="Toggle List" onClick={() => setType(type === 'text' ? 'checklist' : 'text')}>
+                                    <Icon name={type === 'text' ? "list" : "type"} size={18} />
+                                </button>
+                            </div>
+                            <div className="flex gap-2">
+                                <button className="px-4 py-1.5 text-sm font-medium hover:bg-black/5 rounded-lg" onClick={() => { reset(); setIsCreating(false); }}>Cancel</button>
+                                <button className="px-4 py-1.5 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-md" onClick={handleSave}>Save</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const EditorModal = ({ note, onClose, onSave, onDelete, allLabels }) => {
+    const [title, setTitle] = useState(note.title || '');
+    const contentRef = useRef(null);
+    const [items, setItems] = useState(note.items || []);
+    const [color, setColor] = useState(note.color || 'default');
+    const [labels, setLabels] = useState(note.labels || []);
+    const [type, setType] = useState(note.type || 'text');
+    const [pinned, setPinned] = useState(note.pinned || false);
+    const listRef = useRef(null);
+
+    useEffect(() => {
+        if (type === 'text' && contentRef.current) {
+            contentRef.current.innerHTML = note.content || '';
+        }
+        if (type === 'checklist' && listRef.current) {
+            new Sortable(listRef.current, {
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: (evt) => {
+                    const newItems = [...items];
+                    const [moved] = newItems.splice(evt.oldIndex, 1);
+                    newItems.splice(evt.newIndex, 0, moved);
+                    setItems(newItems);
+                }
+            });
+        }
+    }, [note, type]);
+
+    const handleSave = () => { onSave({ ...note, title, content: contentRef.current ? contentRef.current.innerHTML : '', items, color, labels, type, pinned }); onClose(); };
+    const toggleLabel = (l) => setLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
+    const format = (cmd, val) => { document.execCommand(cmd, false, val); if (contentRef.current) contentRef.current.focus(); };
+
+    const handleLock = () => {
+        if (note.locked) {
+            if (confirm("Remove password lock?")) onSave({ ...note, locked: false, password: '' });
+        } else {
+            const pass = prompt("Enter password to lock this note:");
+            if (pass) onSave({ ...note, locked: true, password: pass });
+        }
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onMouseDown={(e) => { if (e.target === e.currentTarget) handleSave(); }}>
+            <div className={`glass max-w-2xl w-full rounded-2xl p-6 space-y-4 animate-pop shadow-2xl note-color-${color || 'default'} border border-white/10`} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                <div className="flex justify-between items-center opacity-40 text-[10px] font-bold uppercase tracking-widest pb-2">
+                    <span>Editing Note</span>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setPinned(!pinned)} className={pinned ? "text-indigo-500" : ""}><Icon name="pin" size={14} /></button>
+                        <span>{type}</span>
+                    </div>
+                </div>
+                <input className="w-full bg-transparent border-none outline-none font-bold text-xl" value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" />
+                {type === 'text' ? (
+                    <div className="space-y-1">
+                        <RichToolbar onFormat={format} />
+                        <div ref={contentRef} contentEditable className="rich-content min-h-[200px] text-base w-full overflow-y-auto" />
+                    </div>
+                ) : (
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar" ref={listRef}>
+                        {items.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2 group/item">
+                                <div className="drag-handle opacity-0 group-hover/item:opacity-30 cursor-grab"><Icon name="grip-vertical" size={14} /></div>
+                                <button onClick={() => { const n = [...items]; n[idx].checked = !n[idx].checked; setItems(n); }}><Icon name={item.checked ? "check-square" : "square"} /></button>
+                                <input className="bg-transparent outline-none flex-1" value={item.text} onChange={e => { const n = [...items]; n[idx].text = e.target.value; setItems(n); }} />
+                                <button onClick={() => setItems(items.filter((_, i) => i !== idx))} className="opacity-0 group-hover/item:opacity-100"><Icon name="trash-2" size={16} /></button>
+                            </div>
+                        ))}
+                        <button className="flex items-center gap-2 opacity-50 text-sm pl-6" onClick={() => setItems([...items, { text: '', checked: false }])}><Icon name="plus" size={14} /> Add item</button>
+                    </div>
+                )}
+                <div className="flex items-center justify-between pt-4 border-t border-black/5">
+                    <div className="flex items-center gap-3">
+                        <ColorPickerBtn selected={color} onSelect={setColor} colors={NOTE_COLORS} />
+                        <LabelSelector currentLabels={labels} onToggle={toggleLabel} allLabels={allLabels} />
+                        <button className={`p-2 ${note.locked ? 'text-indigo-400' : 'text-gray-400'}`} onClick={handleLock} title="Lock Note"><Icon name={note.locked ? "lock" : "unlock"} /></button>
+                        <button className="p-2 text-red-400" onClick={() => onDelete(note.id)}><Icon name="trash-2" /></button>
+                    </div>
+                    <button className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl" onClick={handleSave}>Done</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const NoteCard = ({ note, onEdit, onTogglePin, onToggleCheck }) => {
+    const rowSpan = useMemo(() => {
+        let contentLen = (note.title?.length || 0);
+        if (note.locked) return 8;
+        if (note.type === 'checklist' && note.items) {
+            contentLen += Math.min(note.items.length, 6) * 40;
+        } else {
+            contentLen += Math.min(note.content?.length || 0, 280);
+        }
+        return Math.max(Math.ceil(contentLen / 40) + 6, 8);
+    }, [note]);
+
+    const displayTitle = note.title || new Date(parseInt(note.id)).toLocaleString();
+
+    return (
+        <div data-id={note.id} className={`note-card note-color-${note.color || 'default'} group relative rounded-xl p-4 flex flex-col space-y-2 cursor-pointer break-inside-avoid shadow-sm overflow-hidden`}
+            style={{ gridRowEnd: `span ${rowSpan}` }} onClick={() => onEdit(note)}>
+            <div className="flex justify-between items-start">
+                <h3 className={`font-bold text-sm lg:text-base leading-tight w-full pr-6 line-clamp-2 ${!note.title ? 'opacity-40 italic' : ''}`}>
+                    {displayTitle}
+                </h3>
+                <button className={`absolute top-3 right-3 p-1.5 rounded-full transition-all z-10 ${note.pinned ? 'opacity-100 bg-indigo-500/10' : 'opacity-0 group-hover:opacity-100 hover:bg-black/10'}`}
+                    onClick={e => { e.stopPropagation(); onTogglePin(note); }}>
+                    <Icon name="pin" size={14} className={note.pinned ? "text-indigo-500 fill-indigo-500" : "text-gray-400"} />
+                </button>
+            </div>
+            {note.locked ? (
+                <div className="flex-1 flex flex-col items-center justify-center opacity-30 gap-2">
+                    <Icon name="lock" size={24} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Locked Note</span>
+                </div>
+            ) : (
+                <div className="text-xs lg:text-sm leading-relaxed overflow-hidden">
+                    {note.type === 'checklist' ? (
+                        <div className="space-y-1">
+                            {(note.items || []).slice(0, 6).map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2" onClick={e => { e.stopPropagation(); onToggleCheck(note.id, idx); }}>
+                                    <div className={`w-3 h-3 border rounded-sm flex items-center justify-center ${item.checked ? 'bg-current' : 'border-current opacity-40'}`}>
+                                        {item.checked && <Icon name="check" size={8} className="stroke-[4]" />}
+                                    </div>
+                                    <span className={`truncate ${item.checked ? 'line-through opacity-50' : ''}`}>{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : <div className="rich-preview" dangerouslySetInnerHTML={{ __html: note.content?.length > 280 ? note.content.substring(0, 280) + '...' : note.content }} />}
+                </div>
+            )}
+            {note.labels?.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                    {note.labels.map(L => <span key={L} className="px-2 py-0.5 bg-black/5 dark:bg-black/20 rounded-full text-[10px] font-bold uppercase tracking-wider opacity-60">{L}</span>)}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, onAddLabel, onRenameLabel, onDeleteLabel, deferredPrompt, onInstall }) => {
+    const [newLabel, setNewLabel] = useState('');
+    return (
+        <React.Fragment>
+            <div className={`fixed inset-0 bg-black/50 z-[100] transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
+            <div className={`fixed top-0 left-0 bottom-0 w-72 ${isLightMode ? 'bg-white' : 'bg-[#202124]'} z-[101] transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} shadow-2xl flex flex-col`}>
+                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <span className="font-bold text-xl tracking-tight">Menú</span>
+                    <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full"><Icon name="x" size={20} /></button>
+                </div>
+                <div className="flex-1 overflow-y-auto py-4">
+                    <div className={`px-6 py-3 flex items-center gap-4 cursor-pointer hover:bg-black/5 border-l-4 ${!selectedLabel ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(null); onClose(); }}>
+                        <Icon name="lightbulb" size={20} /> <span className="font-medium">Notes</span>
+                    </div>
+                    {labels.map(l => (
+                        <div key={l} className={`group px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-black/5 border-l-4 ${selectedLabel === l ? 'border-indigo-500 bg-indigo-500/10' : 'border-transparent'}`} onClick={() => { onSelectLabel(l); onClose(); }}>
+                            <div className="flex items-center gap-4 truncate">
+                                <Icon name="tag" size={20} /> <span className="font-medium truncate">{l}</span>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="p-1 hover:bg-black/10 rounded" onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newVal = prompt("Rename label to:", l);
+                                    if (newVal && newVal.trim() && newVal !== l) onRenameLabel(l, newVal.trim());
+                                }}><Icon name="edit-2" size={14} /></button>
+                                <button className="p-1 hover:bg-red-500/10 text-red-500 rounded" onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm(`Delete label "${l}" from all notes?`)) onDeleteLabel(l);
+                                }}><Icon name="trash-2" size={14} /></button>
+                            </div>
+                        </div>
+                    ))}
+                    <div className="px-6 py-3 border-t border-white/10 mt-2">
+                        <div className="text-xs text-gray-500 mb-2 font-bold uppercase opacity-60">Labels</div>
+                        <div className="flex gap-2">
+                            <input className="bg-transparent border-b border-white/10 w-full py-1 text-sm outline-none focus:border-indigo-500" placeholder="New label" value={newLabel} onChange={e => setNewLabel(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newLabel.trim()) { onAddLabel(newLabel.trim()); setNewLabel(''); } }} />
+                            <button onClick={() => { if (newLabel.trim()) { onAddLabel(newLabel.trim()); setNewLabel(''); } }} className="p-1 hover:bg-black/10 rounded-full"><Icon name="plus" size={18} /></button>
+                        </div>
+                    </div>
+                </div>
+                {deferredPrompt && (
+                    <div className="p-6 border-t border-white/5 bg-indigo-500/5">
+                        <button onClick={() => { onInstall(); onClose(); }} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all">
+                            <Icon name="download" size={18} /> <span>Install App</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+        </React.Fragment>
+    );
+};
+
+const SettingsModal = ({ isOpen, onClose, isLightMode, toggleTheme, isSyncActive, toggleSync, vaultName, setVaultName, peers, localLabel, onExport, onImport }) => {
+    const [view, setView] = useState('MAIN');
+    const [tempName, setTempName] = useState(vaultName);
+    const [tempPass, setTempPass] = useState(localStorage.getItem('mesh_vault_pass') || '');
+    const [tempLabel, setTempLabel] = useState(localLabel);
+    const [showAdvancedSync, setShowAdvancedSync] = useState(false);
+    const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
+    const [resetPhrase, setResetPhrase] = useState('');
+
+    useEffect(() => { if (isOpen) setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true }); }, [isOpen]);
+    if (!isOpen) return null;
+
+    const applyEncryption = () => { Database.configure(pendingEncConfig); alert("Encryption Settings Applied."); };
+    const handleConnect = () => { Database.setNodeLabel(tempLabel); setVaultName(tempName); toggleSync(true, tempName, tempPass); };
+    const handleReset = () => { if (resetPhrase.toLowerCase() === 'reset') { localStorage.clear(); window.location.reload(); } };
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+            <div className="glass max-w-md w-full rounded-[2rem] border border-white/10 shadow-3xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                    <h2 className="text-xl font-bold">{view === 'MAIN' ? 'Settings' : 'Back'}</h2>
+                    <button onClick={view === 'MAIN' ? onClose : () => setView('MAIN')} className="p-2 hover:bg-white/10 rounded-full">
+                        <Icon name={view === 'MAIN' ? "x" : "arrow-left"} size={20} />
+                    </button>
+                </div>
+                <div className="p-6 custom-scrollbar max-h-[70vh] overflow-y-auto">
+                    {view === 'MAIN' && (
+                        <div className="space-y-4">
+                            <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={toggleTheme}>
+                                <div className="flex items-center gap-3"><Icon name={isLightMode ? "sun" : "moon"} /> Appearance</div>
+                                <div className={`w-10 h-5 rounded-full relative ${isLightMode ? 'bg-indigo-500' : 'bg-gray-600'}`}>
+                                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isLightMode ? 'left-5.5' : 'left-0.5'}`} />
+                                </div>
+                            </div>
+                            <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SYNC')}>
+                                <div className="flex items-center gap-3"><Icon name="refresh-cw" className={isSyncActive ? "text-green-400" : ""} /> Synchronization</div>
+                                <Icon name="chevron-right" size={16} />
+                            </div>
+                            <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SECURITY')}>
+                                <div className="flex items-center gap-3"><Icon name="lock" /> Security & Encryption</div>
+                                <Icon name="chevron-right" size={16} />
+                            </div>
+                            <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('DATA')}>
+                                <div className="flex items-center gap-3"><Icon name="hard-drive" /> Backup & Data</div>
+                                <Icon name="chevron-right" size={16} />
+                            </div>
+                            <div className="p-4 bg-red-500/5 rounded-2xl flex items-center justify-between cursor-pointer border border-red-500/10" onClick={() => setView('RESET')}>
+                                <div className="flex items-center gap-3 text-red-400"><Icon name="trash-2" /> Reset Application</div>
+                                <Icon name="chevron-right" size={16} className="text-red-400" />
+                            </div>
+                        </div>
+                    )}
+                    {view === 'SECURITY' && (
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-bold text-gray-400">Local Storage</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <select className="bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageAlgo: e.target.value })}>
+                                        <option value="NONE">None</option>
+                                        <option value="AES">AES-256</option>
+                                        <option value="AESQ">AES-Q (Post-Quantum)</option>
+                                        <option value="RABBIT">Rabbit</option>
+                                        <option value="RC4">RC4</option>
+                                    </select>
+                                    <input type="password" placeholder="Key" className="bg-black/20 p-3 rounded-xl border border-white/5" value={pendingEncConfig.storageKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageKey: e.target.value })} />
+                                </div>
+                            </div>
+                            <button onClick={applyEncryption} className="w-full py-3 bg-indigo-600 rounded-xl font-bold">Apply Security Changes</button>
+                        </div>
+                    )}
+                    {view === 'SYNC' && (
+                        <div className="space-y-4">
+                            <div className="space-y-3">
+                                <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Your Device Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
+                                <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Network Name" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
+                                <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" type="password" placeholder="Network Password" value={tempPass} onChange={e => setTempPass(e.target.value)} disabled={isSyncActive} />
+                            </div>
+
+                            <div className="p-4 bg-white/5 rounded-2xl">
+                                <button onClick={() => setShowAdvancedSync(!showAdvancedSync)} className="w-full flex items-center justify-between text-sm font-medium">
+                                    <div className="flex items-center gap-2"><Icon name="settings-2" size={16} /> Advanced Sync Settings</div>
+                                    <Icon name={showAdvancedSync ? "chevron-up" : "chevron-down"} size={16} />
+                                </button>
+
+                                {showAdvancedSync && (
+                                    <div className="mt-4 space-y-4 animate-slideDown">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] uppercase font-bold text-gray-500">P2P Encryption</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <select className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncAlgo: e.target.value })}>
+                                                    <option value="NONE">None</option>
+                                                    <option value="AES">AES-256</option>
+                                                    <option value="AESQ">AES-Q (Post-Quantum)</option>
+                                                    <option value="RABBIT">Rabbit</option>
+                                                    <option value="RC4">RC4</option>
+                                                </select>
+                                                <input type="password" placeholder="Sync Key" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncKey: e.target.value })} />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] uppercase font-bold text-gray-500">Custom PeerJS Server</label>
+                                            <input placeholder="Host (e.g. 0.peerjs.com)" className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pHost || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pHost: e.target.value })} />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <input placeholder="Port" type="number" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPort || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPort: parseInt(e.target.value) || 443 })} />
+                                                <input placeholder="Path" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPath || '/'} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPath: e.target.value })} />
+                                            </div>
+                                            <label className="flex items-center gap-2 cursor-pointer pt-1">
+                                                <input type="checkbox" checked={pendingEncConfig.p2pSecure !== false} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pSecure: e.target.checked })} className="accent-indigo-500" />
+                                                <span className="text-xs text-gray-400">Use SSL (Secure)</span>
+                                            </label>
+                                        </div>
+                                        <button onClick={applyEncryption} className="w-full py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 rounded-lg text-xs font-bold transition-colors">Apply Sync Changes</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={isSyncActive ? () => toggleSync(false) : handleConnect} className={`w-full py-3 rounded-xl font-bold ${isSyncActive ? 'bg-red-500/20 text-red-400' : 'bg-indigo-600 shadow-lg shadow-indigo-600/20'}`}>
+                                {isSyncActive ? 'Disconnect' : 'Connect to Grid'}
+                            </button>
+                            {isSyncActive && (
+                                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl space-y-2">
+                                    <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest flex items-center justify-between">
+                                        <span>Connected Nodes</span>
+                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    </div>
+                                    <div className="text-xs space-y-1">
+                                        <div className="flex items-center gap-2"><Icon name="cpu" size={12} className="opacity-50" /> <span className="opacity-50">{tempLabel} (This Device)</span></div>
+                                        {peers.map(p => <div key={p.id} className="flex items-center gap-2"><Icon name="monitor" size={12} className="text-green-500/50" /> <span>{p.label}</span></div>)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {view === 'DATA' && (
+                        <div className="space-y-3">
+                            <button onClick={() => {
+                                const exportData = {
+                                    vault: vaultName,
+                                    config: Database.config,
+                                    payload: localStorage.getItem(Database.storageKeyPath)
+                                };
+                                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `keep_mesh_${vaultName}_${new Date().toISOString().split('T')[0]}.json`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                            }} className="w-full py-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center gap-2">
+                                <Icon name="download" /> Export Encrypted Backup
+                            </button>
+                            <div className="relative">
+                                <button className="w-full py-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center gap-2">
+                                    <Icon name="upload" /> Import Backup
+                                </button>
+                                <input type="file" accept=".json" onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                        try {
+                                            const imported = JSON.parse(event.target.result);
+                                            if (!imported.payload) throw new Error("Invalid backup format");
+
+                                            let decryptedPayload = null;
+                                            const algo = imported.config?.storageAlgo || 'NONE';
+
+                                            if (algo !== 'NONE') {
+                                                const pass = prompt(`Enter password for ${algo} decryption:`);
+                                                if (!pass) return;
+                                                decryptedPayload = CryptoLayer.decrypt(imported.payload, algo, pass);
+                                            } else {
+                                                decryptedPayload = JSON.parse(imported.payload);
+                                            }
+
+                                            if (decryptedPayload) {
+                                                if (confirm("Data decrypted successfully. Overwrite local vault?")) {
+                                                    Database.config = imported.config;
+                                                    Database.addSet = decryptedPayload.addSet || {};
+                                                    Database.removeSet = decryptedPayload.removeSet || {};
+                                                    Database.save();
+                                                    window.location.reload();
+                                                }
+                                            } else {
+                                                alert("Decryption failed. Incorrect password or corrupt file.");
+                                            }
+                                        } catch (err) {
+                                            alert("Error importing file: " + err.message);
+                                        }
+                                    };
+                                    reader.readAsText(file);
+                                }} className="absolute inset-0 opacity-0 cursor-pointer" />
+                            </div>
+                        </div>
+                    )}
+                    {view === 'RESET' && (
+                        <div className="space-y-4">
+                            <p className="text-xs text-red-400">Type "reset" to confirm deletion of ALL data.</p>
+                            <input className="w-full bg-black/20 p-3 rounded-xl border border-red-500/20" value={resetPhrase} onChange={e => setResetPhrase(e.target.value)} placeholder="reset" />
+                            <button onClick={handleReset} className="w-full py-3 bg-red-600 rounded-xl font-bold">Factory Reset</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

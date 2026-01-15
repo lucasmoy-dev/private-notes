@@ -8,7 +8,8 @@ const CryptoLayer = {
         NONE: 'NONE',
         AES: 'AES',
         RABBIT: 'RABBIT',
-        RC4: 'RC4'
+        RC4: 'RC4',
+        AESQ: 'AESQ' // Post-Quantum Hybrid (AES + SHA3-512)
     },
 
     encrypt(data, algorithm, key) {
@@ -32,6 +33,15 @@ const CryptoLayer = {
                     return CryptoJS.Rabbit.encrypt(payload, key).toString();
                 case this.ALGORITHMS.RC4:
                     return CryptoJS.RC4.encrypt(payload, key).toString();
+                case this.ALGORITHMS.AESQ:
+                    // Post-Quantum Hybrid Layer
+                    // 1. Derive two keys using SHA3-512 (Quantum-Resistant Sponge)
+                    const hash = CryptoJS.SHA3(key, { outputLength: 512 }).toString();
+                    const key1 = hash.substring(0, 64);
+                    const key2 = hash.substring(64, 128);
+                    // 2. Cascade Encryption: Layer 1 (AES) + Layer 2 (Rabbit)
+                    const layer1 = CryptoJS.AES.encrypt(payload, key1).toString();
+                    return CryptoJS.Rabbit.encrypt(layer1, key2).toString();
                 default:
                     return payload;
             }
@@ -63,6 +73,13 @@ const CryptoLayer = {
                     break;
                 case this.ALGORITHMS.RC4:
                     bytes = CryptoJS.RC4.decrypt(encrypted, key);
+                    break;
+                case this.ALGORITHMS.AESQ:
+                    const hashD = CryptoJS.SHA3(key, { outputLength: 512 }).toString();
+                    const k1 = hashD.substring(0, 64);
+                    const k2 = hashD.substring(64, 128);
+                    const layer2Dec = CryptoJS.Rabbit.decrypt(encrypted, k2).toString(CryptoJS.enc.Utf8);
+                    bytes = CryptoJS.AES.decrypt(layer2Dec, k1);
                     break;
                 default:
                     bytes = null;
