@@ -500,6 +500,11 @@
                                 {!isCollapsed && <span className="font-bold text-lg tracking-tight sidebar-text">Private Notes</span>}
                             </div>
                             <div className="flex items-center gap-1">
+                                {deferredPrompt && (
+                                    <button onClick={onInstall} className="p-2 hover:bg-indigo-500/10 text-indigo-500 rounded-lg transition-all" title="Install App">
+                                        <Icon name="download-cloud" size={20} />
+                                    </button>
+                                )}
                                 <button onClick={onToggleCollapse} className="hidden lg:flex p-1.5 hover:bg-black/5 rounded-lg shrink-0 transition-all text-gray-400 hover:text-indigo-500" title="Toggle Sidebar">
                                     <Icon name={isCollapsed ? "chevrons-right" : "chevrons-left"} size={18} />
                                 </button>
@@ -741,7 +746,7 @@
 
                                     {isSyncActive && (
                                         <div className="flex flex-col items-center gap-4 animate-pop pt-4">
-                                            <QRCodeView data={JSON.stringify({ name: tempName, pass: tempPass, label: localLabel })} />
+                                            <QRCodeView data={`${window.location.origin}${window.location.pathname}?vault=${encodeURIComponent(tempName)}&pass=${encodeURIComponent(tempPass)}&sa=${Database.config.storageAlgo || 'NONE'}&ya=${Database.config.syncAlgo || 'NONE'}`} />
                                             <div className="flex flex-col gap-1 text-center">
                                                 <span className="text-[10px] uppercase font-bold text-gray-400">Sync is Active on</span>
                                                 <span className="text-sm font-bold text-indigo-400">{tempName}</span>
@@ -774,15 +779,15 @@
                                             <div className="mt-4 space-y-4 animate-slideDown">
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] uppercase font-bold text-gray-500">P2P Encryption Algorithm</label>
-                                                    <select className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncAlgo: e.target.value })}>
+                                                    <select className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncAlgo: e.target.value, syncKey: (pendingEncConfig.syncAlgo === 'NONE') ? '' : tempPass })}>
                                                         <option value="NONE">None</option>
                                                         <option value="AESQ">AES-Q (Post-Quantum)</option>
                                                         <option value="AES">AES-256</option>
                                                         <option value="RABBIT">Rabbit</option>
                                                         <option value="RC4">RC4</option>
                                                     </select>
-                                                    {(!Database.isLocked && !Database.encryptedConfig) && (
-                                                        <input type="password" placeholder="Manual Sync Key" className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncKey: e.target.value })} />
+                                                    {pendingEncConfig.syncAlgo !== 'NONE' && (
+                                                        <p className="text-[10px] text-indigo-400 opacity-60 px-1">Note: The "Network Password" will be used as the encryption key for P2P sync.</p>
                                                     )}
                                                 </div>
 
@@ -987,7 +992,7 @@
                     // Solo configuramos si no hay una config previa bloqueada (primer inicio)
                     if (!localStorage.getItem(`db_config_${vName}`)) {
                         Database.init(vName, () => { });
-                        Database.configure({ storageAlgo: sAlgo, syncAlgo: yAlgo });
+                        Database.configure({ storageAlgo: sAlgo, syncAlgo: yAlgo, syncKey: vPass });
                     }
 
                     // Limpiar URL
@@ -1090,6 +1095,20 @@
                 }
                 deleteNote(id);
             };
+
+            const handleInstall = async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') setDeferredPrompt(null);
+            };
+
+            const [showInstallBanner, setShowInstallBanner] = useState(false);
+            useEffect(() => {
+                if (deferredPrompt && !localStorage.getItem('install_banner_dismissed')) {
+                    setShowInstallBanner(true);
+                }
+            }, [deferredPrompt]);
 
             const upsert = (data) => {
                 const id = data.id || Date.now();
@@ -1275,8 +1294,10 @@
                             } else {
                                 setSelectedLabel(l);
                             }
-                        }} isLightMode={isLightMode}
-                        deferredPrompt={deferredPrompt} onInstall={() => deferredPrompt.prompt()}
+                        }}
+                        isLightMode={isLightMode}
+                        deferredPrompt={deferredPrompt}
+                        onInstall={handleInstall}
                         lockedLabels={Database.config.lockedLabels || {}}
                         onToggleLockLabel={handleToggleLockLabel}
                         isCollapsed={isSidebarCollapsed}
@@ -1309,6 +1330,23 @@
                     />
 
                     <main className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'} min-h-screen`}>
+                        {showInstallBanner && (
+                            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[300] w-[90%] max-w-md animate-slideDown">
+                                <div className="glass p-4 rounded-2xl border border-indigo-500/20 shadow-2xl flex items-center gap-4 bg-indigo-500/5 backdrop-blur-xl">
+                                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
+                                        <Icon name="download-cloud" size={20} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-bold">Install Private Notes</p>
+                                        <p className="text-[10px] opacity-60">Add to your home screen for quick access.</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => { setShowInstallBanner(false); localStorage.setItem('install_banner_dismissed', 'true'); }} className="p-2 opacity-40 hover:opacity-100"><Icon name="x" size={16} /></button>
+                                        <button onClick={() => { handleInstall(); setShowInstallBanner(false); }} className="px-4 py-2 bg-indigo-600 text-white text-[10px] font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-all">Install</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div className="max-w-6xl mx-auto px-4 py-24 space-y-6">
                             <div className="flex flex-col gap-1 mb-8">
                                 <h1 className="text-4xl font-bold tracking-tight">{selectedLabel || 'All My Notes'}</h1>
