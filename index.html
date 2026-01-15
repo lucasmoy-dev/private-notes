@@ -336,7 +336,14 @@
                 }
             }, [note.id]);
 
-            const handleSave = () => { onSave({ ...note, title, content: contentRef.current ? contentRef.current.innerHTML : '', items, color, labels, pinned }); onClose(); };
+            const handleSave = () => {
+                try {
+                    onSave({ ...note, title, content: contentRef.current ? contentRef.current.innerHTML : '', items, color, labels, pinned });
+                } catch (e) {
+                    console.error("Save failed", e);
+                }
+                onClose();
+            };
             const toggleLabel = (l) => setLabels(prev => prev.includes(l) ? prev.filter(x => x !== l) : [...prev, l]);
             const format = (cmd, val) => { document.execCommand(cmd, false, val); if (contentRef.current) contentRef.current.focus(); };
             const insertEmoji = (emoji) => {
@@ -655,7 +662,7 @@
                     setTempName(vaultName);
                     setTempPass(localStorage.getItem('mesh_vault_pass') || '');
                     setTempLabel(localLabel);
-                    setPendingEncConfig(Database.config || { storageAlgo: 'AESQ', storageKey: '', syncAlgo: 'AESQ', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
+                    setPendingEncConfig(Database.config && Database.config.storageAlgo !== 'NONE' ? Database.config : { storageAlgo: 'AESQ', storageKey: '', syncAlgo: 'AESQ', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
                 }
             }, [isOpen, vaultName, localLabel]);
             if (!isOpen) return null;
@@ -1053,7 +1060,9 @@
                         const s = new Sortable(ref.current, {
                             animation: 150,
                             ghostClass: 'sortable-ghost',
-                            handle: '.note-card', // Use the card itself as handle
+                            handle: '.note-card',
+                            delay: 200,
+                            delayOnTouchOnly: true,
                             onEnd: (evt) => {
                                 // Future: Persist order
                             }

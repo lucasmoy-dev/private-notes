@@ -569,7 +569,24 @@ body.light-theme .mobile-search-bar {
 
 @media (max-width: 600px) {
     .note-creator-overlay {
-        padding: 12px;
-        align-items: center;
+        padding: 0 !important;
+        align-items: flex-start !important;
+    }
+
+    .note-creator-overlay>div,
+    .fixed.inset-0.z-\[110\]>div {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .rich-content {
+        flex: 1 !important;
+        overflow-y: auto !important;
     }
 }

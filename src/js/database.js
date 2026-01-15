@@ -14,9 +14,9 @@ const Database = {
     storageKeyPath: 'mesh_db_v4',
     configKeyPath: 'mesh_db_config',
     config: {
-        storageAlgo: 'AESQ', // NONE | AES | RABBIT | RC4
+        storageAlgo: 'NONE', // NONE | AES | RABBIT | RC4
         storageKey: '',
-        syncAlgo: 'AESQ',
+        syncAlgo: 'NONE',
         syncKey: '',
         p2pHost: '',
         p2pPort: 443,
