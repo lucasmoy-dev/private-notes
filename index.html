@@ -683,11 +683,7 @@
                                         </div>
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SYNC')}>
-                                        <div className="flex items-center gap-3"><Icon name="refresh-cw" className={isSyncActive ? "text-green-400" : ""} /> Synchronization</div>
-                                        <Icon name="chevron-right" size={16} />
-                                    </div>
-                                    <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('SECURITY')}>
-                                        <div className="flex items-center gap-3"><Icon name="lock" /> Security & Encryption</div>
+                                        <div className="flex items-center gap-3"><Icon name="refresh-cw" className={isSyncActive ? "text-green-400" : ""} /> Sync & Security</div>
                                         <Icon name="chevron-right" size={16} />
                                     </div>
                                     <div className="p-4 bg-white/5 rounded-2xl flex items-center justify-between cursor-pointer" onClick={() => setView('DATA')}>
@@ -700,119 +696,126 @@
                                     </div>
                                 </div>
                             )}
-                            {view === 'SECURITY' && (
-                                <div className="space-y-6">
-                                    <div className="space-y-3 p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
-                                        <label className="text-[10px] uppercase font-bold text-indigo-400">Vault Protection</label>
-                                        <p className="text-xs text-gray-400">Protect all your encryption keys with a Master Password.</p>
-                                        <button onClick={() => {
-                                            const pass = prompt("Enter a Master Password to protect your keys (leave empty to disable):");
-                                            if (pass !== null) {
-                                                Database.lock(pass);
-                                                alert(pass ? "Vault Protected!" : "Vault Protection Disabled.");
-                                            }
-                                        }} className="w-full py-2 bg-indigo-600 rounded-xl font-bold text-xs">
-                                            {(Database.isLocked || Database.encryptedConfig) ? 'Change Master Password' : 'Set Master Password'}
-                                        </button>
-                                        {(Database.isLocked || Database.encryptedConfig) && (
-                                            <button onClick={() => { if (confirm("Disable vault protection? Keys will be stored in plain text.")) { Database.lock(''); alert("Protection Disabled."); } }} className="w-full py-2 bg-white/5 rounded-xl font-bold text-xs text-red-400">Disable Protection</button>
-                                        )}
-                                    </div>
-                                    <div className="space-y-3">
-                                        <label className="text-[10px] uppercase font-bold text-gray-400">Local Storage Algorithm</label>
-                                        <select className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageAlgo: e.target.value })}>
-                                            <option value="NONE">None (Not Recommended)</option>
-                                            <option value="AESQ">AES-Q (Post-Quantum)</option>
-                                            <option value="AES">AES-256</option>
-                                            <option value="RABBIT">Rabbit</option>
-                                            <option value="RC4">RC4</option>
-                                        </select>
-                                        {(!Database.isLocked && !Database.encryptedConfig) && (
-                                            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                                                <p className="text-[10px] text-yellow-500 font-bold uppercase mb-1">Warning</p>
-                                                <p className="text-[10px] text-yellow-500/70">Vault Protection is disabled. You must manually manage encryption keys below or enable Vault Protection above for automatic security.</p>
-                                                <input type="password" placeholder="Manual Encryption Key" className="w-full bg-black/20 p-2 mt-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.storageKey} onChange={e => setPendingEncConfig({ ...pendingEncConfig, storageKey: e.target.value })} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <button onClick={applyEncryption} className="w-full py-3 bg-indigo-600 rounded-xl font-bold">Apply Security Changes</button>
-                                </div>
-                            )}
                             {view === 'SYNC' && (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <div className="space-y-3">
-                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Your Device Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
-                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" placeholder="Network Name" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
-                                        <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5" type="password" placeholder="Network Password" value={tempPass} onChange={e => setTempPass(e.target.value)} disabled={isSyncActive} />
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 pl-1">Device & Network</label>
+                                            <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm" placeholder="Your Device Label" value={tempLabel} onChange={e => setTempLabel(e.target.value)} />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] uppercase font-bold text-gray-400 pl-1">Network Name</label>
+                                                <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm" placeholder="MainVault" value={tempName} onChange={e => setTempName(e.target.value)} disabled={isSyncActive} />
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] uppercase font-bold text-gray-400 pl-1">Encryption Algo</label>
+                                                <select className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm" value={pendingEncConfig.storageAlgo}
+                                                    onChange={e => {
+                                                        const algo = e.target.value;
+                                                        setPendingEncConfig({ ...pendingEncConfig, storageAlgo: algo, syncAlgo: algo, syncKey: algo === 'NONE' ? '' : tempPass, storageKey: algo === 'NONE' ? '' : tempPass });
+                                                    }}>
+                                                    <option value="NONE">None</option>
+                                                    <option value="AESQ">AES-Q</option>
+                                                    <option value="AES">AES-256</option>
+                                                    <option value="RABBIT">Rabbit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[10px] uppercase font-bold text-gray-400 pl-1">Universal Password (Sync & Storage)</label>
+                                            <input className="w-full bg-black/20 p-3 rounded-xl border border-white/5 text-sm" type="password" placeholder="Protection Password" value={tempPass} onChange={e => {
+                                                const p = e.target.value;
+                                                setTempPass(p);
+                                                if (pendingEncConfig.storageAlgo !== 'NONE') {
+                                                    setPendingEncConfig(prev => ({ ...prev, storageKey: p, syncKey: p }));
+                                                }
+                                            }} disabled={isSyncActive} />
+                                        </div>
                                     </div>
 
-                                    <button onClick={handleConnect} disabled={isSyncActive} className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${isSyncActive ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'}`}>
-                                        <Icon name={isSyncActive ? "refresh-cw" : "zap"} className={isSyncActive ? "animate-spin" : ""} />
-                                        {isSyncActive ? 'Sync Active' : 'Enable Real-time Sync'}
-                                    </button>
+                                    <div className="space-y-3">
+                                        <button onClick={() => {
+                                            handleConnect();
+                                            Database.configure({
+                                                ...pendingEncConfig,
+                                                storageKey: pendingEncConfig.storageAlgo === 'NONE' ? '' : tempPass,
+                                                syncKey: pendingEncConfig.storageAlgo === 'NONE' ? '' : tempPass
+                                            });
+                                        }} disabled={isSyncActive} className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${isSyncActive ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'}`}>
+                                            <Icon name={isSyncActive ? "refresh-cw" : "zap"} className={isSyncActive ? "animate-spin" : ""} />
+                                            {isSyncActive ? 'Sync Active' : 'Enable & Protect Vault'}
+                                        </button>
+
+                                        {!isSyncActive && (
+                                            <button onClick={() => {
+                                                Database.configure({
+                                                    ...pendingEncConfig,
+                                                    storageKey: pendingEncConfig.storageAlgo === 'NONE' ? '' : tempPass,
+                                                    syncKey: pendingEncConfig.storageAlgo === 'NONE' ? '' : tempPass
+                                                });
+                                                alert("Local protection settings applied.");
+                                            }} className="w-full py-2 bg-white/5 rounded-xl text-xs font-bold opacity-60 hover:opacity-100">Apply Local Protection Only</button>
+                                        )}
+                                    </div>
 
                                     {isSyncActive && (
-                                        <div className="flex flex-col items-center gap-4 animate-pop pt-4">
-                                            <QRCodeView data={`${window.location.origin}${window.location.pathname}?vault=${encodeURIComponent(tempName)}&pass=${encodeURIComponent(tempPass)}&sa=${Database.config.storageAlgo || 'NONE'}&ya=${Database.config.syncAlgo || 'NONE'}`} />
-                                            <div className="flex flex-col gap-1 text-center">
-                                                <span className="text-[10px] uppercase font-bold text-gray-400">Sync is Active on</span>
-                                                <span className="text-sm font-bold text-indigo-400">{tempName}</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {peers && Object.keys(peers).length > 0 && (
-                                        <div className="pt-4 space-y-2">
-                                            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest pl-2">Connected Devices ({Object.keys(peers).length})</span>
-                                            {Object.entries(peers).map(([id, peer]) => (
-                                                <div key={id} className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                                        <span className="text-xs font-medium">{peer.label || id.substring(0, 8)}</span>
-                                                    </div>
-                                                    <span className="text-[9px] opacity-30 font-mono italic">P2P Active</span>
+                                        <div className="space-y-4 animate-pop pt-2">
+                                            <div className="flex flex-col items-center gap-4 p-4 bg-white/5 rounded-[2rem] border border-white/5">
+                                                <QRCodeView data={`${window.location.origin}${window.location.pathname}?vault=${encodeURIComponent(tempName)}&pass=${encodeURIComponent(tempPass)}&sa=${pendingEncConfig.storageAlgo}&ya=${pendingEncConfig.storageAlgo}`} />
+                                                <div className="flex flex-col gap-1 text-center">
+                                                    <span className="text-[10px] uppercase font-bold text-gray-400">Scan to pair devices</span>
+                                                    <span className="text-xs font-bold text-indigo-400">Network: {tempName}</span>
                                                 </div>
-                                            ))}
+                                            </div>
+
+                                            {peers && Object.keys(peers).length > 0 && (
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center justify-between px-2">
+                                                        <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Active Peers</span>
+                                                        <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">{Object.keys(peers).length} Online</span>
+                                                    </div>
+                                                    {Object.entries(peers).map(([id, peer]) => (
+                                                        <div key={id} className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                                                                <span className="text-xs font-bold">{peer.label || id.substring(0, 8)}</span>
+                                                            </div>
+                                                            <span className="text-[9px] opacity-40 font-mono italic">Connected</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
-                                    <div className="p-4 bg-white/5 rounded-2xl">
-                                        <button onClick={() => setShowAdvancedSync(!showAdvancedSync)} className="w-full flex items-center justify-between text-sm font-medium">
-                                            <div className="flex items-center gap-2"><Icon name="settings-2" size={16} /> Advanced Sync Settings</div>
-                                            <Icon name={showAdvancedSync ? "chevron-up" : "chevron-down"} size={16} />
+                                    <div className="p-4 bg-white/5 rounded-[1.5rem] border border-white/5">
+                                        <button onClick={() => setShowAdvancedSync(!showAdvancedSync)} className="w-full flex items-center justify-between text-[11px] font-bold uppercase tracking-wider opacity-60">
+                                            <div className="flex items-center gap-2"><Icon name="settings-2" size={14} /> Advanced P2P Config</div>
+                                            <Icon name={showAdvancedSync ? "chevron-up" : "chevron-down"} size={14} />
                                         </button>
-
                                         {showAdvancedSync && (
                                             <div className="mt-4 space-y-4 animate-slideDown">
                                                 <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase font-bold text-gray-500">P2P Encryption Algorithm</label>
-                                                    <select className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.syncAlgo} onChange={e => setPendingEncConfig({ ...pendingEncConfig, syncAlgo: e.target.value, syncKey: (pendingEncConfig.syncAlgo === 'NONE') ? '' : tempPass })}>
-                                                        <option value="NONE">None</option>
-                                                        <option value="AESQ">AES-Q (Post-Quantum)</option>
-                                                        <option value="AES">AES-256</option>
-                                                        <option value="RABBIT">Rabbit</option>
-                                                        <option value="RC4">RC4</option>
-                                                    </select>
-                                                    {pendingEncConfig.syncAlgo !== 'NONE' && (
-                                                        <p className="text-[10px] text-indigo-400 opacity-60 px-1">Note: The "Network Password" will be used as the encryption key for P2P sync.</p>
-                                                    )}
-                                                </div>
-
-                                                <div className="space-y-2">
                                                     <label className="text-[10px] uppercase font-bold text-gray-500">Custom PeerJS Server</label>
-                                                    <input placeholder="Host (e.g. 0.peerjs.com)" className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pHost || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pHost: e.target.value })} />
+                                                    <input placeholder="Host (e.g. 0.peerjs.com)" className="w-full bg-black/20 p-2 rounded-lg border border-white/5 text-xs text-indigo-400" value={pendingEncConfig.p2pHost || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pHost: e.target.value })} />
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <input placeholder="Port" type="number" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPort || ''} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPort: parseInt(e.target.value) || 443 })} />
                                                         <input placeholder="Path" className="bg-black/20 p-2 rounded-lg border border-white/5 text-xs" value={pendingEncConfig.p2pPath || '/'} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pPath: e.target.value })} />
                                                     </div>
-                                                    <label className="flex items-center gap-2 cursor-pointer pt-1">
-                                                        <input type="checkbox" checked={pendingEncConfig.p2pSecure !== false} onChange={e => setPendingEncConfig({ ...pendingEncConfig, p2pSecure: e.target.checked })} className="accent-indigo-500" />
-                                                        <span className="text-xs text-gray-400">Use SSL (Secure)</span>
-                                                    </label>
                                                 </div>
-                                                <button onClick={applyEncryption} className="w-full py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 rounded-lg text-xs font-bold transition-colors">Apply Sync Changes</button>
                                             </div>
                                         )}
+                                    </div>
+                                    <div className="p-4 bg-indigo-500/5 rounded-[1.5rem] border border-indigo-500/10 space-y-2">
+                                        <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest pl-1">Vault Master Lock</label>
+                                        <p className="text-[10px] text-gray-400 leading-relaxed px-1">Requires your Master Password before opening the app or viewing locked notes.</p>
+                                        <button onClick={() => {
+                                            const pass = prompt("Enter a Master Password (leave empty to disable):");
+                                            if (pass !== null) { Database.lock(pass); alert(pass ? "Vault Lock Active!" : "Vault Lock Disabled."); }
+                                        }} className="w-full py-2 bg-indigo-600/20 text-indigo-400 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-600/30 transition-all">
+                                            {(Database.isLocked || Database.encryptedConfig) ? 'Change Master Lock' : 'Enable Master Lock'}
+                                        </button>
                                     </div>
                                 </div>
                             )}
