@@ -650,7 +650,14 @@
             const [pendingEncConfig, setPendingEncConfig] = useState(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
             const [resetPhrase, setResetPhrase] = useState('');
 
-            useEffect(() => { if (isOpen) setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true }); }, [isOpen]);
+            useEffect(() => {
+                if (isOpen) {
+                    setTempName(vaultName);
+                    setTempPass(localStorage.getItem('mesh_vault_pass') || '');
+                    setTempLabel(localLabel);
+                    setPendingEncConfig(Database.config || { storageAlgo: 'NONE', storageKey: '', syncAlgo: 'NONE', syncKey: '', p2pHost: '', p2pPort: 443, p2pPath: '/', p2pSecure: true });
+                }
+            }, [isOpen, vaultName, localLabel]);
             if (!isOpen) return null;
 
             const applyEncryption = () => { Database.configure(pendingEncConfig); alert("Encryption Settings Applied."); };
@@ -972,39 +979,37 @@
 
                 // Pequeño delay para asegurar que CryptoLayer está listo
                 setTimeout(() => {
-                    Database.init(vaultName, () => {
-                        setNotes(Database.getAll());
-                        setIsLocked(Database.isLocked);
-                    });
-                }, 100);
+                    const params = new URLSearchParams(window.location.search);
+                    let currentVault = vaultName;
 
-                // Check for Sync URL params
-                const params = new URLSearchParams(window.location.search);
-                if (params.has('vault')) {
-                    const vName = params.get('vault');
-                    const vPass = params.get('pass') || '';
-                    const sAlgo = params.get('sa') || 'NONE';
-                    const yAlgo = params.get('ya') || 'NONE';
-
-                    setVaultName(vName);
-                    localStorage.setItem('mesh_vault_name', vName);
-
-                    // Solo configuramos si no hay una config previa bloqueada (primer inicio)
-                    if (!localStorage.getItem(`db_config_${vName}`)) {
-                        Database.init(vName, () => { });
-                        Database.configure({ storageAlgo: sAlgo, syncAlgo: yAlgo, syncKey: vPass });
+                    if (params.has('vault')) {
+                        currentVault = params.get('vault');
+                        setVaultName(currentVault);
+                        localStorage.setItem('mesh_vault_name', currentVault);
+                        // Limpiar URL inmediatamente
+                        window.history.replaceState({}, document.title, window.location.pathname);
                     }
 
-                    // Limpiar URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                    Database.init(currentVault, () => {
+                        setNotes(Database.getAll());
+                        setIsLocked(Database.isLocked);
 
-                    // Auto-sync
-                    setTimeout(() => toggleSync(true, vName, vPass), 500);
-                }
+                        if (params.has('vault')) {
+                            const vPass = params.get('pass') || '';
+                            const sAlgo = params.get('sa') || 'NONE';
+                            const yAlgo = params.get('ya') || 'NONE';
 
-                if (localStorage.getItem('mesh_sync_active') === 'true') {
-                    toggleSync(true, vaultName, localStorage.getItem('mesh_vault_pass'));
-                }
+                            // Solo configuramos si es una bóveda nueva o sin config
+                            if (!localStorage.getItem(`db_config_${currentVault}`)) {
+                                Database.configure({ storageAlgo: sAlgo, syncAlgo: yAlgo, syncKey: vPass });
+                            }
+                            localStorage.setItem('mesh_vault_pass', vPass);
+                            toggleSync(true, currentVault, vPass);
+                        } else if (localStorage.getItem('mesh_sync_active') === 'true') {
+                            toggleSync(true, currentVault, localStorage.getItem('mesh_vault_pass'));
+                        }
+                    });
+                }, 100);
             }, []);
 
             const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(localStorage.getItem('sidebar_collapsed') === 'true');
