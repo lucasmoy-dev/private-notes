@@ -1,5 +1,5 @@
 /**
- * 🕸️ MESH ENGINE v13 - React Ready
+ * 🕸️ MESH ENGINE v13 - React Ready (Encrypted)
  * Now transmits node labels/metadata along with the data.
  */
 
@@ -10,10 +10,11 @@ const Hub = {
     onUpdate: null,
     networkName: '',
 
-    initialize(networkName, networkUpdateCallback) {
+    initialize(networkName, password, networkUpdateCallback) {
         this.networkName = networkName;
         this.onUpdate = networkUpdateCallback;
-        this.discoveryId = 'v13-mesh-' + CryptoJS.SHA256(networkName).toString().substring(0, 16);
+        const secret = networkName + (password || '');
+        this.discoveryId = 'v14-mesh-' + CryptoJS.SHA256(secret).toString().substring(0, 16);
         this.startPeer(true);
     },
 
@@ -57,7 +58,19 @@ const Hub = {
                 if (msg.label && this.conns.has(c.peer)) {
                     this.conns.get(c.peer).label = msg.label;
                 }
-                if (Database.merge(msg.payload)) this.broadcast();
+
+                let payload = msg.payload;
+                // Decrypt if needed
+                if (typeof payload === 'string' && window.CryptoLayer && Database.config.syncAlgo !== 'NONE') {
+                    const decrypted = CryptoLayer.decrypt(payload, Database.config.syncAlgo, Database.config.syncKey);
+                    if (decrypted) payload = decrypted;
+                    else console.warn("Hub: Sync Decoy or Decrypt Failed from", c.peer);
+                }
+
+                if (payload && typeof payload === 'object') {
+                    if (Database.merge(payload)) this.broadcast();
+                }
+
                 if (msg.topology) msg.topology.forEach(pid => this.connect(pid));
                 if (this.onUpdate) this.onUpdate();
             }
@@ -83,16 +96,27 @@ const Hub = {
 
     sendSync(c) {
         if (!c.open) return;
+
+        let payload = Database.getPayload();
+        if (window.CryptoLayer && Database.config.syncAlgo !== 'NONE' && Database.config.syncKey) {
+            payload = CryptoLayer.encrypt(payload, Database.config.syncAlgo, Database.config.syncKey);
+        }
+
         c.send({
             type: 'SYNC',
-            payload: Database.getPayload(),
+            payload: payload,
             label: Database.nodeLabel,
             topology: Array.from(this.conns.keys()).concat([this.peer.id])
         });
     },
 
     broadcast() {
-        const msg = { type: 'SYNC', payload: Database.getPayload(), label: Database.nodeLabel };
+        let payload = Database.getPayload();
+        if (window.CryptoLayer && Database.config.syncAlgo !== 'NONE' && Database.config.syncKey) {
+            payload = CryptoLayer.encrypt(payload, Database.config.syncAlgo, Database.config.syncKey);
+        }
+
+        const msg = { type: 'SYNC', payload: payload, label: Database.nodeLabel };
         this.conns.forEach(node => node.conn.open && node.conn.send(msg));
     }
 };

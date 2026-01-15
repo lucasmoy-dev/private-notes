@@ -1,6 +1,6 @@
 /**
- * 🗄️ DATABASE ENGINE v4 - Note Optimized
- * Pure Logic & CRDT. 
+ * 🗄️ DATABASE ENGINE v5 - Encrypted
+ * Pure Logic & CRDT + Crypto. 
  */
 
 const Database = {
@@ -9,35 +9,78 @@ const Database = {
     knownPeers: new Set(),
     nodeLabel: localStorage.getItem('mesh_node_label') || 'Device-' + Math.floor(Math.random() * 1000),
     vaultName: localStorage.getItem('mesh_vault_name') || 'LocalVault',
-    storageKey: 'mesh_db_v4',
+
+    // Config
+    storageKeyPath: 'mesh_db_v4',
+    configKeyPath: 'mesh_db_config',
+    config: {
+        storageAlgo: 'NONE', // NONE | AES | RABBIT | RC4
+        storageKey: '',
+        syncAlgo: 'NONE',
+        syncKey: ''
+    },
+
     onUpdate: null,
 
     init(name, updateCallback) {
         this.vaultName = name;
-        this.storageKey = `db_v4_${name}`;
+        this.storageKeyPath = `db_v5_${name}`;
+        this.configKeyPath = `db_config_${name}`;
         this.onUpdate = updateCallback;
 
-        const raw = localStorage.getItem(this.storageKey);
+        // Load Config
+        const savedConfig = localStorage.getItem(this.configKeyPath);
+        if (savedConfig) {
+            try { this.config = { ...this.config, ...JSON.parse(savedConfig) }; }
+            catch (e) { console.error("DB Config Corrupt", e); }
+        }
+
+        // Load Data
+        const raw = localStorage.getItem(this.storageKeyPath);
         if (raw) {
             try {
-                const p = JSON.parse(raw);
-                this.addSet = p.addSet || {};
-                this.removeSet = p.removeSet || {};
-                if (p.peers) this.knownPeers = new Set(p.peers);
+                // Attempt Decrypt
+                let p = null;
+                if (window.CryptoLayer) {
+                    p = CryptoLayer.decrypt(raw, this.config.storageAlgo, this.config.storageKey);
+                } else {
+                    p = JSON.parse(raw);
+                }
+
+                if (p) {
+                    this.addSet = p.addSet || {};
+                    this.removeSet = p.removeSet || {};
+                    if (p.peers) this.knownPeers = new Set(p.peers);
+                }
             } catch (e) {
-                console.error("Database: Storage corruption.", e);
+                console.error("Database: Storage corruption or Decrypt Failure.", e);
             }
         }
         if (this.onUpdate) this.onUpdate();
     },
 
     save() {
-        localStorage.setItem(this.storageKey, JSON.stringify({
+        const payload = {
             addSet: this.addSet,
             removeSet: this.removeSet,
             peers: Array.from(this.knownPeers)
-        }));
+        };
+
+        let dataToStore = JSON.stringify(payload);
+
+        // Encrypt if needed
+        if (window.CryptoLayer && this.config.storageAlgo !== 'NONE') {
+            dataToStore = CryptoLayer.encrypt(payload, this.config.storageAlgo, this.config.storageKey);
+        }
+
+        localStorage.setItem(this.storageKeyPath, dataToStore);
         localStorage.setItem('mesh_vault_name', this.vaultName);
+    },
+
+    configure(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        localStorage.setItem(this.configKeyPath, JSON.stringify(this.config));
+        this.save(); // Re-save data with new encryption settings
     },
 
     setNodeLabel(label) {
