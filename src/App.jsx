@@ -42,6 +42,8 @@ const LockScreen = ({ onUnlock }) => {
     );
 };
 
+const VERSION = "v1.0.5";
+
 function App() {
     const [notes, setNotes] = useState([]);
     const [selectedNote, setSelectedNote] = useState(null);
@@ -441,6 +443,7 @@ function App() {
                 onToggleCollapse={onToggleCollapse}
                 onOpenLabelManager={() => setShowLabelManager(true)}
                 homeLabel={Database.config.homeLabel}
+                version={VERSION}
             />
 
             <LabelManagerModal
@@ -525,6 +528,7 @@ function App() {
                 onConfig={() => setShowSettings(true)}
                 onAdd={() => setIsCreating(true)}
                 isSearchOpen={isMobileSearchOpen}
+                version={VERSION}
             />
 
             {isLocked && <LockScreen onUnlock={() => { setIsLocked(false); setNotes(Database.getAll()); }} />}

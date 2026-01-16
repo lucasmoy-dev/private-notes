@@ -1,7 +1,7 @@
 import React from 'react';
 import Icon from './Icon';
 
-const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, deferredPrompt, onInstall, lockedLabels = [], isCollapsed, onToggleCollapse, onOpenLabelManager, homeLabel }) => {
+const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLightMode, deferredPrompt, onInstall, lockedLabels = [], isCollapsed, onToggleCollapse, onOpenLabelManager, homeLabel, version }) => {
     const items = [
         { id: null, name: 'All Notes', icon: 'sticky-note' },
         ...labels.map(l => ({ id: l, name: l, icon: (Array.isArray(lockedLabels) ? lockedLabels.includes(l) : !!lockedLabels?.[l]) ? 'lock' : 'tag' }))
@@ -75,6 +75,10 @@ const Sidebar = ({ isOpen, onClose, labels, selectedLabel, onSelectLabel, isLigh
                             {!isCollapsed && <span className="font-medium sidebar-text">Labels</span>}
                         </button>
                     </div>
+                </div>
+
+                <div className="p-4 border-t border-white/5 flex items-center justify-center">
+                    <span className="text-[9px] font-mono opacity-30 uppercase tracking-[0.2em]">{version}</span>
                 </div>
             </div>
         </React.Fragment>
