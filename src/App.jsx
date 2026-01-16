@@ -42,7 +42,7 @@ const LockScreen = ({ onUnlock }) => {
     );
 };
 
-const VERSION = "v1.0.5";
+const VERSION = "v1.0.6";
 
 function App() {
     const [notes, setNotes] = useState([]);

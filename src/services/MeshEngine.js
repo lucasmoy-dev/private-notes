@@ -53,10 +53,15 @@ const Hub = {
                 this.startPeer(false);
             } else if (err.type === 'peer-unavailable') {
                 // Ignore, just a failed connection to a peer
-            } else if (err.type === 'server-error' || err.type === 'network-error') {
-                console.warn("Hub: Connection issue, retrying in 5s...");
+            } else if (['server-error', 'network', 'socket-error', 'disconnected'].includes(err.type)) {
+                console.warn("Hub: Critical connection issue, retrying in 5s...");
                 setTimeout(() => this.startPeer(attemptMaster), 5000);
             }
+        });
+
+        this.peer.on('disconnected', () => {
+            console.warn("Hub: Disconnected from signaling server. Attempting to reconnect...");
+            this.peer.reconnect();
         });
 
         this.peer.on('connection', (c) => this.setupChannel(c));
