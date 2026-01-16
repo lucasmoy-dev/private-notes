@@ -24,6 +24,7 @@ const Hub = {
         const targetId = attemptMaster ? this.discoveryId : null;
         const cfg = Database.config || {};
         const peerOptions = {
+            debug: 2,
             config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
         };
 
@@ -32,6 +33,9 @@ const Hub = {
             peerOptions.port = cfg.p2pPort || 443;
             peerOptions.path = cfg.p2pPath || '/';
             peerOptions.secure = cfg.p2pSecure !== false;
+        } else {
+            // Force secure on HTTPS/Production
+            peerOptions.secure = window.location.protocol === 'https:';
         }
 
         this.peer = new Peer(targetId, peerOptions);
@@ -44,7 +48,15 @@ const Hub = {
         });
 
         this.peer.on('error', (err) => {
-            if (err.type === 'unavailable-id') this.startPeer(false);
+            console.error("Hub Peer Error:", err.type, err);
+            if (err.type === 'unavailable-id') {
+                this.startPeer(false);
+            } else if (err.type === 'peer-unavailable') {
+                // Ignore, just a failed connection to a peer
+            } else if (err.type === 'server-error' || err.type === 'network-error') {
+                console.warn("Hub: Connection issue, retrying in 5s...");
+                setTimeout(() => this.startPeer(attemptMaster), 5000);
+            }
         });
 
         this.peer.on('connection', (c) => this.setupChannel(c));
