@@ -1,0 +1,21 @@
+{
+    "name": "Keep Mesh",
+    "short_name": "KeepMesh",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#202124",
+    "theme_color": "#202124",
+    "description": "Private, P2P mesh notes application.",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/2965/2965358.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/2965/2965358.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
