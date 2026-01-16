@@ -20,13 +20,17 @@
         "sortablejs": "^1.15.6"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
         "@types/react": "^18.2.66",
         "@types/react-dom": "^18.2.22",
         "@vitejs/plugin-react": "^4.2.1",
+        "autoprefixer": "^10.4.23",
         "eslint": "^8.57.0",
         "eslint-plugin-react": "^7.34.1",
         "eslint-plugin-react-hooks": "^4.6.0",
         "eslint-plugin-react-refresh": "^0.4.6",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.1.18",
         "vite": "^5.2.0"
     }
 }
