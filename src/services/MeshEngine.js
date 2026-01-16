@@ -8,6 +8,7 @@ const Hub = {
     discoveryId: '',
     conns: new Map(), // id -> { conn, label }
     onUpdate: null,
+    retryTimer: null,
     networkName: '',
 
     initialize(networkName, password, networkUpdateCallback) {
@@ -19,7 +20,18 @@ const Hub = {
     },
 
     startPeer(attemptMaster) {
-        if (this.peer && !this.peer.destroyed) this.peer.destroy();
+        if (this.retryTimer) {
+            clearTimeout(this.retryTimer);
+            this.retryTimer = null;
+        }
+
+        if (this.peer) {
+            this.peer.off('open');
+            this.peer.off('error');
+            this.peer.off('disconnected');
+            this.peer.off('connection');
+            if (!this.peer.destroyed) this.peer.destroy();
+        }
 
         const targetId = attemptMaster ? this.discoveryId : null;
         const cfg = Database.config || {};
@@ -34,7 +46,6 @@ const Hub = {
             peerOptions.path = cfg.p2pPath || '/';
             peerOptions.secure = cfg.p2pSecure !== false;
         } else {
-            // Force secure on HTTPS/Production
             peerOptions.secure = window.location.protocol === 'https:';
         }
 
@@ -51,17 +62,20 @@ const Hub = {
             console.error("Hub Peer Error:", err.type, err);
             if (err.type === 'unavailable-id') {
                 this.startPeer(false);
-            } else if (err.type === 'peer-unavailable') {
-                // Ignore, just a failed connection to a peer
             } else if (['server-error', 'network', 'socket-error', 'disconnected'].includes(err.type)) {
-                console.warn("Hub: Critical connection issue, retrying in 5s...");
-                setTimeout(() => this.startPeer(attemptMaster), 5000);
+                console.warn("Hub: Connection issue, scheduled full restart in 5s...");
+                if (!this.retryTimer) {
+                    this.retryTimer = setTimeout(() => {
+                        this.retryTimer = null;
+                        this.startPeer(attemptMaster);
+                    }, 5000 + Math.random() * 2000);
+                }
             }
         });
 
         this.peer.on('disconnected', () => {
-            console.warn("Hub: Disconnected from signaling server. Attempting to reconnect...");
-            this.peer.reconnect();
+            console.warn("Hub: Disconnected from signaling server.");
+            // Don't call reconnect() here to avoid conflict with the error-triggered restart
         });
 
         this.peer.on('connection', (c) => this.setupChannel(c));
