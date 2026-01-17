@@ -6,7 +6,8 @@ export const state = {
     settings: {
         theme: 'dark',
         drivePath: '/backup/notes/',
-        algo: 'aes-256-gcm'
+        algo: 'aes-256-gcm',
+        syncChunkSize: 100
     },
     currentView: 'all',
     editingNoteId: null,

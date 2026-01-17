@@ -88,6 +88,14 @@ export function getSettingsTemplate() {
                                 <input type="text" id="config-drive-path" class="h-10 px-4 w-full" placeholder="p.ej. CloudNotesV3" autocomplete="off">
                                 <p class="text-[10px] text-muted-foreground">Las notas se guardarán encriptadas dentro de esta carpeta.</p>
                             </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-medium">Límite de tamaño por archivo (KBs)</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="config-sync-chunk-size" class="h-10 px-4 w-full" placeholder="100" min="10" max="1000">
+                                    <span class="text-xs text-muted-foreground shrink-0 font-bold">KB</span>
+                                </div>
+                                <p class="text-[10px] text-muted-foreground">Define cuánto pesará cada archivo subido (el sistema agrupará tus notas en varios trozos).</p>
+                            </div>
                             <button id="connect-drive-btn" class="btn-shad btn-shad-outline w-full h-10 flex items-center justify-center gap-2">
                                 <i data-lucide="link" class="w-4 h-4"></i> Conectar con Google Drive
                             </button>

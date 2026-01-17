@@ -66,15 +66,17 @@
         @apply inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2;
     }
 
+    /* Mobile Add Button Refined */
     #mobile-add-btn {
-        @apply bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center;
-        width: 3.5rem;
-        height: 3.5rem;
-        border-radius: 1rem;
+        @apply transition-all duration-200;
     }
 
-    .light #mobile-add-btn {
-        @apply bg-primary text-white;
+    #mobile-add-btn:active {
+        @apply scale-90 opacity-70;
+    }
+
+    .btn-shad-primary {
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/20 active:scale-95 transition-all;
     }
 
     .btn-shad-secondary {
@@ -98,8 +100,23 @@
         @apply text-muted-foreground hover:bg-accent hover:text-accent-foreground;
     }
 
+    .nav-link.active,
+    .nav-link-mobile.active,
+    .nav-link-mobile-drawer.active {
+        @apply text-violet-500 font-bold bg-violet-500/5 !important;
+        @apply dark:text-violet-400 dark:bg-violet-500/10 !important;
+    }
+
     .nav-link.active {
-        @apply bg-accent text-accent-foreground font-semibold;
+        @apply border-r-4 border-violet-500;
+    }
+
+    .nav-link-mobile-drawer.active {
+        @apply border-l-4 border-violet-500;
+    }
+
+    .nav-link-mobile.active i {
+        @apply scale-110 text-violet-500 transition-transform !important;
     }
 
     .card-shad {
@@ -111,17 +128,14 @@
     }
 
     .dialog-content {
-        @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl duration-300 animate-in fade-in-0 zoom-in-95 sm:rounded-xl;
+        @apply fixed left-[50%] top-[50%] z-50 grid w-[90%] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl duration-300 animate-in fade-in-0 zoom-in-95 sm:rounded-xl;
     }
 
     .dialog-content.dialog-hide {
         @apply animate-out fade-out-0 zoom-out-95 duration-200 !important;
     }
 
-    .dialog-content.fullscreen-mode {
-        @apply fixed inset-0 w-screen h-screen translate-x-0 translate-y-0 left-0 top-0 z-[60] rounded-none border-none shadow-none bg-background p-6 !important;
-        max-width: none !important;
-    }
+
 
     .popover-content {
         @apply z-50 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none animate-in fade-in-0 zoom-in-95;
@@ -132,8 +146,13 @@
     }
 
     .editor-tool.active {
-        @apply !bg-primary/20 !text-primary !border-primary/40 shadow-sm ring-1 ring-primary/10;
+        @apply bg-violet-500 text-white border-violet-500 shadow-md ring-1 ring-violet-400/30 !important;
+        @apply dark:bg-violet-600 dark:border-violet-700 !important;
         opacity: 1 !important;
+    }
+
+    .menu-active-violet {
+        @apply bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold !important;
     }
 
     .editor-tool i {
@@ -315,7 +334,11 @@ textarea {
     }
 
     .dialog-content {
-        @apply w-full h-full max-w-none max-h-none rounded-none p-4 bottom-0 left-0 translate-x-0 translate-y-0 fixed inset-0 !important;
+        @apply w-[95%] h-auto max-h-[92vh] rounded-3xl shadow-2xl border bg-background p-0 left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2 fixed !important;
+    }
+
+    #editor-modal .dialog-content {
+        @apply w-full h-full max-w-none max-h-none rounded-none left-0 top-0 translate-x-0 translate-y-0 !important;
     }
 
     /* Hide Desktop Header on Mobile */
@@ -367,7 +390,11 @@ textarea {
     }
 
     #categories-modal .dialog-content {
-        @apply max-h-[80vh] h-auto rounded-t-2xl bottom-0 top-auto translate-y-0 !important;
+        @apply h-[85vh] md:h-[550px] rounded-t-3xl bottom-0 top-auto translate-y-0 translate-x-[-50%] p-2 !important;
+    }
+
+    #cat-manager-list>div {
+        @apply p-4 gap-4 ring-offset-background transition-shadow shadow-sm !important;
     }
 }
 
@@ -435,10 +462,7 @@ html.auth-pre-verified #app {
     @apply text-primary;
 }
 
-/* Fix mobile add btn translate */
-#mobile-add-btn div {
-    @apply -translate-y-6 !important;
-}
+/* Removed redundant absolute positioning for mobile add btn */
 
 #mobile-sidebar-drawer {
     box-shadow: 20px 0 50px rgba(0, 0, 0, 0.2);
@@ -468,6 +492,22 @@ html.auth-pre-verified #app {
 
     to {
         transform: translateY(0);
+    }
+}
+
+.animate-out {
+    animation-duration: 250ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: forwards;
+}
+
+.slide-out-to-left {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
     }
 }
 

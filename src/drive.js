@@ -5,10 +5,10 @@
  */
 
 export class DriveSync {
-    constructor(dbFileName = 'chunk_', folderPath = '/backup/notes/') {
+    constructor(dbFileName = 'chunk_', folderPath = '/backup/notes/', chunkSizeLimitKB = 100) {
         this.basePath = folderPath;
         this.dbPrefix = dbFileName;
-        this.chunkSizeLimit = 100 * 1024; // 100KB
+        this.chunkSizeLimit = chunkSizeLimitKB * 1024;
     }
 
     async getOrCreateFolder(path) {
@@ -47,14 +47,21 @@ export class DriveSync {
             chunks.push(serialized.substring(i, i + this.chunkSizeLimit));
         }
 
-        // 2. Clear old chunks in Drive (Simple strategy for POC: delete or mark)
-        // In a real app, we'd compare versions. Here we overwrite/update.
+        // 2. Clear all existing chunks first to avoid leftovers from previous smaller/different chunking
+        const q = `name contains '${this.dbPrefix}' and '${folderId}' in parents and trashed = false`;
+        const existingFiles = await gapi.client.drive.files.list({ q, fields: 'files(id)' });
+        if (existingFiles.result.files) {
+            for (const file of existingFiles.result.files) {
+                await gapi.client.drive.files.delete({ fileId: file.id });
+            }
+        }
+
+        // 3. Upload new chunks
         for (let i = 0; i < chunks.length; i++) {
-            const fileName = `${this.dbPrefix}${i}.json`;
+            const fileName = `${this.dbPrefix}${i.toString().padStart(5, '0')}.json`;
             await this.uploadFile(fileName, chunks[i], folderId);
         }
 
-        // Return count for metadata tracking
         return chunks.length;
     }
 

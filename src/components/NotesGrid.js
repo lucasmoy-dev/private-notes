@@ -42,9 +42,6 @@ export function renderNotes(onEdit) {
                     <div class="flex items-center gap-2 shrink-0 pt-0.5">
                         ${note.pinned ? '<i data-lucide="pin" class="w-4 h-4 fill-current text-primary"></i>' : ''}
                         ${note.passwordHash ? `<i data-lucide="${isUnlocked ? 'unlock' : 'lock'}" class="w-4 h-4 lock-indicator cursor-pointer opacity-80" data-id="${note.id}"></i>` : ''}
-                        <button class="delete-note-btn p-2 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors md:opacity-0 md:group-hover:opacity-100 text-muted-foreground/40" data-id="${note.id}" title="Eliminar">
-                            <i data-lucide="trash-2" class="w-4.5 h-4.5"></i>
-                        </button>
                     </div>
                 </div>
                 <div class="text-[13px] opacity-70 line-clamp-6 leading-relaxed mb-4 flex-1">
@@ -53,7 +50,7 @@ export function renderNotes(onEdit) {
                 ${cat ? `
                 <div class="mt-auto">
                     <span class="flex items-center gap-2 text-[10px] px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 font-bold text-primary/70 uppercase tracking-widest">
-                        <i data-lucide="${cat.icon || 'tag'}" class="w-3.5 h-3.5 text-primary"></i>
+                        <i data-lucide="${cat.icon || 'tag'}" class="w-3.5 h-3.5 text-foreground/70"></i>
                         ${cat.name}
                     </span>
                 </div>` : ''}
@@ -122,29 +119,6 @@ export function renderNotes(onEdit) {
     }
 
     safeCreateIcons();
-
-    // Attach deletion handlers
-    grid.querySelectorAll('.delete-note-btn').forEach(btn => {
-        btn.onclick = async (e) => {
-            e.stopPropagation();
-            const noteId = btn.dataset.id;
-            const note = state.notes.find(n => n.id === noteId);
-
-            if (note?.passwordHash && !state.unlockedNotes.has(note.id)) {
-                const pass = await openPrompt('Eliminar Nota Protegida', 'Ingresa la contraseña para autorizar la eliminación:');
-                if (!pass) return;
-                const hash = await Security.hashPassword(pass);
-                if (hash !== note.passwordHash) return showToast('❌ Contraseña incorrecta');
-            }
-
-            if (confirm('¿Eliminar esta nota?')) {
-                state.notes = state.notes.filter(n => n.id !== noteId);
-                await saveLocal();
-                renderNotes(onEdit);
-                if (window.triggerAutoSync) window.triggerAutoSync();
-            }
-        };
-    });
 
     // Initialize/Refresh Drag & Drop
     initSortable(onEdit);

@@ -33,7 +33,7 @@ export function renderCategories(onViewChange, categories = null) {
         if (!dropdown) return;
         const item = document.createElement('div');
         item.className = 'px-3 py-1.5 text-xs hover:bg-accent cursor-pointer flex items-center gap-2';
-        item.innerHTML = `<i data-lucide="${icon || 'tag'}" class="w-3.5 h-3.5 text-primary"></i> ${name}`;
+        item.innerHTML = `<i data-lucide="${icon || 'tag'}" class="w-3.5 h-3.5 text-foreground/70"></i> ${name}`;
         item.onclick = () => {
             if (select) select.value = id;
             updateCategoryUI();
@@ -86,7 +86,7 @@ export function renderCategories(onViewChange, categories = null) {
             btn.innerHTML = `
                 <div class="flex items-center justify-between w-full">
                     <div class="flex items-center gap-3">
-                        <i data-lucide="${cat.icon || 'tag'}" class="w-4 h-4 text-primary"></i>
+                        <i data-lucide="${cat.icon || 'tag'}" class="w-4 h-4 text-foreground/70 group-hover:text-violet-500 transition-colors"></i>
                         <span class="truncate sidebar-label">${cat.name}</span>
                     </div>
                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -6,33 +6,39 @@ import { Security } from '../auth.js';
 export function getCategoryManagerTemplate() {
     return `
     <div id="categories-modal" class="fixed inset-0 z-[70] hidden">
-        <div class="dialog-overlay"></div>
-        <div class="dialog-content max-w-lg p-0 overflow-hidden h-[500px] flex flex-col">
-            <div class="p-6 flex justify-between items-center border-b">
+        <div class="dialog-overlay close-categories"></div>
+        <div class="dialog-content max-w-lg p-0 overflow-hidden flex flex-col shadow-2xl">
+            <div class="p-6 flex justify-between items-center border-b bg-background/50 backdrop-blur-md sticky top-0 z-10">
                 <div>
-                    <h2 class="text-lg font-semibold text-foreground">Gestionar Etiquetas</h2>
-                    <p class="text-xs text-muted-foreground">Organiza tus notas con categorías personalizadas</p>
+                    <h2 class="text-xl font-bold text-foreground">Etiquetas</h2>
+                    <p class="text-xs text-muted-foreground">Organiza tus pensamientos por categorías</p>
                 </div>
-                <button class="close-categories p-2 hover:bg-accent rounded-md transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button class="close-categories p-2 hover:bg-accent rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
-            <div class="p-4 bg-muted/30 border-b">
-                <div class="flex items-center gap-2">
+            <div class="p-4 bg-muted/20 border-b">
+                <div class="flex items-center gap-3">
                     <div class="relative flex-1">
-                        <i data-lucide="tag" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"></i>
+                        <i data-lucide="tag" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50"></i>
                         <input type="text" id="new-cat-name" placeholder="Nueva etiqueta..." 
-                               class="pl-12 h-10 w-full bg-background" autocomplete="off">
+                               class="pl-12 h-12 w-full bg-background border-none ring-1 ring-border focus:ring-2 focus:ring-violet-500 rounded-2xl transition-all" autocomplete="off">
                     </div>
-                    <button id="add-cat-btn" class="btn-shad btn-shad-primary h-10 px-6">Crear</button>
+                    <button id="add-cat-btn" class="w-12 h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 active:scale-95 transition-all">
+                        <i data-lucide="plus" class="w-6 h-6"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="cat-manager-list">
+            <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cat-manager-list">
                 <!-- Items injected here -->
             </div>
+            
+            <div class="p-4 border-t bg-background/50 backdrop-blur-md md:hidden">
+                <button class="close-categories w-full h-12 bg-secondary text-secondary-foreground font-bold rounded-2xl hover:bg-secondary/80 transition-all">Hecho</button>
+            </div>
         </div>
-        <div id="cat-icon-picker" class="fixed z-[80] hidden popover-content p-2 w-64 bg-popover border shadow-2xl rounded-xl">
-            <div class="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto p-1" id="cat-icons-grid"></div>
+        <div id="cat-icon-picker" class="fixed z-[80] hidden popover-content p-2 w-64 bg-popover border shadow-2xl rounded-2xl backdrop-blur-xl">
+            <div class="grid grid-cols-6 gap-2 p-1" id="cat-icons-grid"></div>
         </div>
     </div>`;
 }
@@ -51,21 +57,24 @@ export function renderCategoryManager(onRefreshSidebar, categories = null) {
         item.className = 'flex items-center gap-3 p-2 rounded-lg border bg-card/50 hover:bg-accent/30 transition-all group';
 
         item.innerHTML = `
-            <div class="w-10 h-10 rounded-lg cursor-pointer hover:bg-accent border flex items-center justify-center shrink-0 transition-all hover:scale-105" 
+            <div class="w-12 h-12 rounded-xl cursor-pointer hover:bg-accent border bg-background flex items-center justify-center shrink-0 transition-all active:scale-95" 
                  id="icon-trigger-${cat.id}" title="Cambiar icono">
-                 <i data-lucide="${cat.icon || 'tag'}" class="w-5 h-5 text-primary"></i>
+                 <i data-lucide="${cat.icon || 'tag'}" class="w-5 h-5 text-foreground/80"></i>
             </div>
             
-            <input type="text" value="${cat.name}" 
-                   class="bg-transparent border-none outline-none font-medium text-sm flex-1 focus:ring-0 transition-colors h-9 px-2 rounded hover:bg-background/50 focus:bg-background"
-                   id="cn-${cat.id}" autocomplete="off">
+            <div class="flex flex-col flex-1 min-w-0">
+                <input type="text" value="${cat.name}" 
+                       class="bg-transparent border-none outline-none font-bold text-base w-full focus:ring-0 transition-colors h-7 px-0 rounded"
+                       id="cn-${cat.id}" autocomplete="off">
+                <span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">${cat.passwordHash ? 'Protegida' : 'Pública'}</span>
+            </div>
             
-            <div class="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                <button class="p-2 rounded-md hover:bg-background border border-transparent hover:border-border transition-all ${cat.passwordHash ? 'text-primary' : 'text-muted-foreground'}"
+            <div class="flex items-center gap-2">
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-violet-500/10 transition-all ${cat.passwordHash ? 'text-violet-500 bg-violet-500/5 border border-violet-500/20' : 'text-muted-foreground border border-transparent'}"
                         id="lock-${cat.id}" title="${cat.passwordHash ? 'Protegido' : 'Protección'}">
                     <i data-lucide="${cat.passwordHash ? 'lock' : 'unlock'}" class="w-4 h-4"></i>
                 </button>
-                <button class="p-2 rounded-md hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-all"
+                <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground border border-transparent transition-all"
                         id="del-${cat.id}" title="Eliminar">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>

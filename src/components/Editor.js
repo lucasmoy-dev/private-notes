@@ -18,103 +18,64 @@ export function getEditorTemplate() {
                     class="bg-transparent text-xl font-bold outline-none border-none placeholder:text-muted-foreground w-full">
                 
                 <div class="flex items-center gap-1">
-                    <button id="toggle-fullscreen" class="hidden md:flex editor-tool" title="Modo Pantalla Completa">
-                        <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                    </button>
                     <div class="relative">
                         <button id="note-options-btn" class="editor-tool" title="Más opciones">
                             <i data-lucide="more-vertical" class="w-5 h-5"></i>
                         </button>
-                        <div id="note-options-menu" class="hidden absolute right-0 top-full mt-1 bg-popover border shadow-2xl rounded-xl p-1 z-[120] min-w-[160px]">
-                            <button id="opt-copy-all" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors">
-                                <i data-lucide="copy" class="w-4 h-4"></i> Copiar todo
+                        <div id="note-options-menu" class="hidden absolute right-0 top-full mt-1 bg-popover border shadow-2xl rounded-xl p-1 z-[120] min-w-[170px]">
+                            <button id="opt-copy-all" class="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-accent rounded-md transition-colors">
+                                <i data-lucide="copy" class="w-4 h-4 text-muted-foreground"></i> Copiar todo
                             </button>
-                            <button id="opt-download" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors">
-                                <i data-lucide="download" class="w-4 h-4"></i> Descargar .txt
+                            <button id="opt-download" class="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-accent rounded-md transition-colors border-b pb-2.5 mb-1.5">
+                                <i data-lucide="download" class="w-4 h-4 text-muted-foreground"></i> Descargar .txt
+                            </button>
+                            <button id="opt-toggle-pin" class="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-accent rounded-md transition-colors">
+                                <i data-lucide="pin" class="w-4 h-4 text-muted-foreground" id="opt-pin-icon"></i> <span id="opt-pin-label">Fijar nota</span>
+                            </button>
+                            <button id="opt-toggle-lock" class="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-accent rounded-md transition-colors border-b pb-2.5 mb-1.5">
+                                <i data-lucide="lock" class="w-4 h-4 text-muted-foreground" id="opt-lock-icon"></i> <span id="opt-lock-label">Proteger</span>
+                            </button>
+                             <button id="opt-delete-note" class="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-destructive/5 text-destructive rounded-md transition-colors font-medium">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar nota
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 py-2 overflow-y-auto px-4">
-                <div class="flex items-center gap-3 w-full md:w-auto mb-3">
-                    <div class="editor-toolbar-container flex-1 justify-start md:flex-initial hidden md:flex items-center gap-1 p-1 border rounded-md bg-muted/30 w-fit shrink-0">
-                        <button class="editor-tool" data-cmd="bold" title="Negrita (Ctrl+B)">
-                            <i data-lucide="bold" class="w-4 h-4"></i>
-                        </button>
-                        <button class="editor-tool" data-cmd="italic" title="Cursiva (Ctrl+I)">
-                            <i data-lucide="italic" class="w-4 h-4"></i>
-                        </button>
-                        <button class="editor-tool" data-cmd="underline" title="Subrayado (Ctrl+U)">
-                            <i data-lucide="underline" class="w-4 h-4"></i>
-                        </button>
-                        <div class="w-px h-4 bg-border mx-1"></div>
-                        <button class="editor-tool" data-cmd="insertUnorderedList" title="Lista de viñetas">
-                            <i data-lucide="list" class="w-4 h-4"></i>
-                        </button>
-                        <button class="editor-tool" data-cmd="insertOrderedList" title="Lista numerada">
-                            <i data-lucide="list-ordered" class="w-4 h-4"></i>
-                        </button>
-                        <button id="checklist-btn" class="editor-tool" title="Checklist">
-                            <i data-lucide="check-square" class="w-4 h-4"></i>
-                        </button>
-                        <div class="w-px h-4 bg-border mx-1"></div>
-                        <button id="add-link" class="editor-tool" title="Hipervínculo">
-                            <i data-lucide="link" class="w-4 h-4"></i>
-                        </button>
-                        <button id="open-text-colors" class="editor-tool relative" title="Color de texto">
-                            <div class="flex flex-col items-center">
-                                <i data-lucide="type" class="w-4 h-4"></i>
-                                <div class="w-3 h-[2px] bg-red-500 rounded-full -mt-0.5"></div>
-                            </div>
-                        </button>
-                        <button id="open-emojis" class="editor-tool" title="Emojis"><i data-lucide="smile" class="w-4 h-4"></i></button>
-                    </div>
+            <!-- Toolbar (Unified top) -->
+            <div class="px-4 border-b py-2 flex items-center bg-muted/20">
+                <div class="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto no-scrollbar py-0.5">
+                    <button data-cmd="bold" class="editor-tool border bg-background shrink-0"><i data-lucide="bold" class="w-4 h-4"></i></button>
+                    <button data-cmd="italic" class="editor-tool border bg-background shrink-0"><i data-lucide="italic" class="w-4 h-4"></i></button>
+                    <button data-cmd="underline" class="editor-tool border bg-background shrink-0"><i data-lucide="underline" class="w-4 h-4"></i></button>
+                    <div class="w-px h-6 bg-border mx-0.5 shrink-0"></div>
+                    <button id="checklist-btn" class="editor-tool border bg-background shrink-0"><i data-lucide="check-square" class="w-4 h-4"></i></button>
+                    <button id="mobile-checklist-btn" class="hidden editor-tool border bg-background shrink-0"><i data-lucide="check-square" class="w-4 h-4"></i></button>
+                    <button data-cmd="insertUnorderedList" class="editor-tool border bg-background shrink-0"><i data-lucide="list" class="w-4 h-4"></i></button>
+                    <button data-cmd="insertOrderedList" class="editor-tool border bg-background shrink-0"><i data-lucide="list-ordered" class="w-4 h-4"></i></button>
+                    <div class="w-px h-6 bg-border mx-0.5 shrink-0"></div>
+                    <button id="add-link" class="editor-tool border bg-background shrink-0"><i data-lucide="link" class="w-4 h-4"></i></button>
+                    <button id="mobile-link-btn" class="hidden editor-tool border bg-background shrink-0"><i data-lucide="link" class="w-4 h-4"></i></button>
+                    <button id="open-text-colors" class="editor-tool border bg-background shrink-0 relative"><i data-lucide="type" class="w-4 h-4"></i><div class="w-3 h-[2px] bg-red-500 rounded-full absolute bottom-1 right-2"></div></button>
+                    <button id="mobile-text-color-btn" class="hidden editor-tool border bg-background shrink-0"><i data-lucide="type" class="w-4 h-4"></i></button>
+                    <button id="open-emojis" class="editor-tool border bg-background shrink-0"><i data-lucide="smile" class="w-4 h-4"></i></button>
+                    <button id="mobile-open-emojis" class="hidden editor-tool border bg-background shrink-0"><i data-lucide="smile" class="w-4 h-4"></i></button>
                 </div>
+            </div>
 
+            <div class="flex-1 py-4 overflow-y-auto px-4 relative">
                 <div id="edit-content" contenteditable="true"
-                    class="min-h-[200px] md:min-h-[400px] outline-none text-base leading-relaxed prose prose-slate dark:prose-invert max-w-none"
+                    class="min-h-[300px] outline-none text-base leading-relaxed prose prose-slate dark:prose-invert max-w-none"
                     placeholder="Empieza a escribir..."></div>
             </div>
 
-            <div class="border-t py-3 px-4 flex items-center justify-between gap-2 editor-bottom-bar shrink-0">
-                <div class="flex md:hidden items-center gap-1.5 flex-1 min-w-0 overflow-x-auto pb-1 no-scrollbar">
-                         <!-- Mobile Toolbar -->
-                        <button id="mobile-format-trigger" class="editor-tool border border-input bg-background/50 transition-all shrink-0" title="Formato">
-                            <i data-lucide="type" class="w-4 h-4"></i>
-                        </button>
-                        </div>
-
-                        <div class="w-px h-6 bg-border mx-0.5"></div>
-
-                        <button id="checklist-btn-mobile" class="editor-tool border border-input bg-background/50 transition-all shrink-0">
-                            <i data-lucide="check-square" class="w-4 h-4"></i>
-                        </button>
-                        <button id="mobile-text-color-btn" class="editor-tool border border-input bg-background/50 transition-all shrink-0">
-                            <i data-lucide="type" class="w-4 h-4 text-primary"></i>
-                        </button>
-                        <button id="open-colors-mobile" class="editor-tool border border-input bg-background/50 transition-all shrink-0" title="Fondo">
-                            <i data-lucide="palette" class="w-4 h-4"></i>
-                        </button>
-                        
-                         <div class="w-px h-6 bg-border mx-0.5"></div>
-
-                        <button id="toggle-pin" class="editor-tool border border-input bg-background/50 transition-all shrink-0">
-                            <i data-lucide="pin" class="w-4 h-4"></i>
-                        </button>
-                        <button id="toggle-lock" class="editor-tool border border-input bg-background/50 transition-all shrink-0">
-                            <i data-lucide="lock" class="w-4 h-4"></i>
-                        </button>
-                        <button id="delete-note" class="editor-tool border border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white shrink-0 ml-auto" title="Eliminar nota">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                </div>
-
-                <div class="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
-                    <button id="open-colors" class="editor-tool border border-input bg-background/50 transition-all shrink-0" title="Fondo">
+            <div class="border-t py-2 px-4 flex items-center justify-between gap-3 editor-bottom-bar shrink-0">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <button id="open-colors" class="editor-tool border border-input bg-background/50 transition-all shrink-0" title="Color de nota">
                         <i data-lucide="palette" class="w-4 h-4"></i>
                     </button>
+                    <button id="open-colors-mobile" class="hidden editor-tool border border-input bg-background/50 shrink-0"><i data-lucide="palette" class="w-4 h-4"></i></button>
 
                     <div class="relative flex-1 min-w-0" id="cat-select-wrapper">
                         <button id="cat-dropdown-trigger"
@@ -132,29 +93,11 @@ export function getEditorTemplate() {
                     </div>
                 </div>
 
-                <div class="hidden md:flex gap-1.5 shrink-0">
-                     <button id="delete-note-desktop" class="btn-shad bg-destructive/10 text-destructive hover:bg-destructive hover:text-white h-9 w-9 p-0" title="Eliminar nota">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                    <button id="save-note" class="btn-shad btn-shad-primary h-9 px-4 font-bold">Hecho</button>
-                </div>
-                
-                <button id="save-note-mobile" class="md:hidden btn-shad btn-shad-primary h-9 px-3 font-bold ml-2">OK</button>
+                <button id="save-note" class="hidden md:flex btn-shad btn-shad-primary h-9 px-6 font-bold">Hecho</button>
+                <button id="save-note-mobile" class="md:hidden btn-shad btn-shad-primary h-9 px-4 font-bold">OK</button>
             </div>
             
-            <!-- Mobile Tools Menu Moved Outside Scroll Container -->
-            <div id="mobile-tools-menu" class="hidden absolute left-4 bottom-16 mb-2 bg-popover border shadow-2xl rounded-2xl p-1.5 z-[150] flex flex-col gap-1 min-w-[200px] animate-in slide-in-from-bottom-2 duration-200 overflow-hidden">
-                <button data-command="bold" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="bold" class="w-4 h-4"></i> Negrita</button>
-                <button data-command="italic" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="italic" class="w-4 h-4"></i> Cursiva</button>
-                <button data-command="underline" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="underline" class="w-4 h-4"></i> Subrayado</button>
-                <div class="h-px bg-border my-1.5 mx-2"></div>
-                <button data-command="insertUnorderedList" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="list" class="w-4 h-4"></i> Lista</button>
-                <button data-command="insertOrderedList" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="list-ordered" class="w-4 h-4"></i> Numeración</button>
-                <div class="h-px bg-border my-1.5 mx-2"></div>
-                <button id="mobile-link-btn" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="link" class="w-4 h-4"></i> Enlace</button>
-            </div>
-            </div>
-        </div>
+         </div>
     </div>
     
     <!-- Popovers -->
@@ -175,7 +118,6 @@ export function initEditor(onSave) {
     const contentEl = document.getElementById('edit-content');
     const closeBtn = document.getElementById('close-editor');
     const saveBtn = document.getElementById('save-note');
-    const deleteBtn = document.getElementById('delete-note');
 
     closeBtn.onclick = () => saveActiveNote();
 
@@ -195,9 +137,7 @@ export function initEditor(onSave) {
             onSave();
         }
     };
-    if (deleteBtn) deleteBtn.onclick = handleDelete;
-    const deleteBtnDesktop = document.getElementById('delete-note-desktop');
-    if (deleteBtnDesktop) deleteBtnDesktop.onclick = handleDelete;
+    document.getElementById('opt-delete-note').onclick = handleDelete;
 
     document.querySelectorAll('.editor-tool[data-cmd]').forEach(btn => {
         if (btn.dataset.cmd) {
@@ -208,17 +148,6 @@ export function initEditor(onSave) {
                 updateToolsUI();
             };
         }
-    });
-
-    // Handle mobile drawer commands with mousedown too
-    document.querySelectorAll('#mobile-tools-menu button[data-command]').forEach(btn => {
-        btn.onmousedown = (e) => {
-            e.preventDefault();
-            restoreSelection();
-            document.execCommand(btn.dataset.command, false, null);
-            document.getElementById('mobile-tools-menu').classList.add('hidden');
-            updateToolsUI();
-        };
     });
 
     initPopovers();
@@ -232,39 +161,27 @@ export function initEditor(onSave) {
     titleInput.onfocus = () => titleInput.select();
     titleInput.onclick = () => titleInput.select();
 
-    // Fullscreen toggle
-    document.getElementById('toggle-fullscreen').onclick = () => {
-        const modal = document.getElementById('editor-modal');
-        const content = modal.querySelector('.dialog-content');
-        const isFull = content.classList.contains('fullscreen-mode');
-        const btn = document.getElementById('toggle-fullscreen');
-        const icon = btn.querySelector('i');
+    // Removed Fullscreen toggler logic
 
-        if (isFull) {
-            content.classList.remove('fullscreen-mode');
-            icon.setAttribute('data-lucide', 'maximize-2');
-            btn.classList.remove('active');
-        } else {
-            content.classList.add('fullscreen-mode');
-            icon.setAttribute('data-lucide', 'minimize-2');
-            btn.classList.add('active');
-        }
-        safeCreateIcons();
-    };
 
-    // Note Toggles (Pin/Lock)
-    document.getElementById('toggle-pin').onclick = () => {
-        const isActive = document.getElementById('toggle-pin').dataset.active === 'true';
+    // Note Toggles (Pin/Lock) - Now in Options Menu
+    const togglePin = () => {
+        const isActive = document.getElementById('opt-toggle-pin').dataset.active === 'true';
         updatePinUI(!isActive);
         saveActiveNote(false); // Quick save
     };
+    document.getElementById('opt-toggle-pin').onclick = (e) => {
+        e.stopPropagation();
+        togglePin();
+    };
 
-    document.getElementById('toggle-lock').onclick = async () => {
-        const isActive = document.getElementById('toggle-lock').dataset.active === 'true';
+    const toggleLock = async () => {
+        const isActive = document.getElementById('opt-toggle-lock').dataset.active === 'true';
         if (!isActive) {
             const pass = await openPrompt('Proteger Nota', 'Crea una contraseña para esta nota:');
             if (pass) {
-                state.tempEditorPassword = pass;
+                const lockEl = document.getElementById('opt-toggle-lock');
+                lockEl.dataset.tempHash = await Security.hashPassword(pass);
                 updateLockUI(true);
                 saveActiveNote(false); // Quick save
             }
@@ -274,35 +191,28 @@ export function initEditor(onSave) {
             saveActiveNote(false); // Quick save
         }
     };
+    document.getElementById('opt-toggle-lock').onclick = (e) => {
+        e.stopPropagation();
+        toggleLock();
+    };
 
-    const mobileChecklistBtn = document.getElementById('checklist-btn-mobile');
+    const mobileChecklistBtn = document.getElementById('mobile-checklist-btn');
     if (mobileChecklistBtn) {
         mobileChecklistBtn.onclick = () => toggleChecklist();
     }
 
-    // Mobile format menu
-    const formatTrigger = document.getElementById('mobile-format-trigger');
-    const formatMenu = document.getElementById('mobile-tools-menu');
-    if (formatTrigger) {
-        formatTrigger.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            formatMenu.classList.toggle('hidden');
-        };
+    const mobileLinkBtn = document.getElementById('mobile-link-btn');
+    if (mobileLinkBtn) {
+        mobileLinkBtn.onclick = () => setupLinkAction();
     }
 
-
-
-    document.getElementById('mobile-link-btn').onclick = () => {
-        setupLinkAction();
-        formatMenu.classList.add('hidden');
-    };
-
-    document.getElementById('mobile-text-color-btn').onclick = (e) => {
-        restoreSelection();
-        togglePopover(e, 'text-color-popover');
-        formatMenu.classList.add('hidden');
-    };
+    const mobileTextColorBtn = document.getElementById('mobile-text-color-btn');
+    if (mobileTextColorBtn) {
+        mobileTextColorBtn.onclick = (e) => {
+            restoreSelection();
+            togglePopover(e, 'text-color-popover');
+        };
+    }
 
     // Options menu
     const optionsBtn = document.getElementById('note-options-btn');
@@ -333,7 +243,6 @@ export function initEditor(onSave) {
     };
 
     document.addEventListener('click', () => {
-        if (formatMenu) formatMenu.classList.add('hidden');
         if (optionsMenu) optionsMenu.classList.add('hidden');
     });
 
@@ -430,15 +339,15 @@ function updateToolsUI() {
         } catch (e) { }
     });
 
-    const pinBtn = document.getElementById('toggle-pin');
-    if (pinBtn) pinBtn.classList.toggle('active', pinBtn.dataset.active === 'true');
+    const pinBtn = document.getElementById('opt-toggle-pin');
+    if (pinBtn) updatePinUI(pinBtn.dataset.active === 'true');
 
-    const lockBtn = document.getElementById('toggle-lock');
-    if (lockBtn) lockBtn.classList.toggle('active', lockBtn.dataset.active === 'true');
+    const lockBtn = document.getElementById('opt-toggle-lock');
+    if (lockBtn) updateLockUI(lockBtn.dataset.active === 'true');
 
-    // Checklist button feedback
-    const checklistBtn = document.getElementById('checklist-btn');
-    if (checklistBtn) {
+    const updateChecklistStatus = (btnId) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
         let isChecklist = false;
         try {
             const selection = window.getSelection();
@@ -453,34 +362,13 @@ function updateToolsUI() {
                 }
             }
         } catch (e) { }
-        checklistBtn.classList.toggle('active', isChecklist);
-    }
+        btn.classList.toggle('active', isChecklist);
+    };
 
-    const checklistBtnMobile = document.getElementById('checklist-btn-mobile');
-    if (checklistBtnMobile) {
-        let isChecklist = false;
-        try {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                let node = selection.anchorNode;
-                while (node && node.id !== 'edit-content') {
-                    if (node.nodeName === 'UL' && node.classList.contains('checklist')) {
-                        isChecklist = true;
-                        break;
-                    }
-                    node = node.parentNode;
-                }
-            }
-        } catch (e) { }
-        checklistBtnMobile.classList.toggle('active', isChecklist);
-    }
+    updateChecklistStatus('checklist-btn');
+    updateChecklistStatus('mobile-checklist-btn');
 
-    // Also update mobile trigger if active
-    const mobileFormatTrigger = document.getElementById('mobile-format-trigger');
-    if (mobileFormatTrigger) {
-        const isMenuOpen = !document.getElementById('mobile-tools-menu').classList.contains('hidden');
-        mobileFormatTrigger.classList.toggle('active', isMenuOpen);
-    }
+    // Removed mobile format trigger update
 }
 
 export function openEditor(note = null) {
@@ -543,7 +431,8 @@ function closeEditor() {
         content.classList.remove('dialog-hide');
         state.editingNoteId = null;
         state.tempEditorPassword = null;
-        document.getElementById('toggle-lock').dataset.tempHash = '';
+        const lockOpt = document.getElementById('opt-toggle-lock');
+        if (lockOpt) lockOpt.dataset.tempHash = '';
 
         // Clear sensitive fields in modal to avoid leaks after closing
         document.getElementById('edit-title').value = '';
@@ -554,12 +443,17 @@ function closeEditor() {
 }
 
 export async function saveActiveNote(shouldClose = true) {
-    let title = document.getElementById('edit-title').value.trim();
-    const content = document.getElementById('edit-content').innerHTML;
-    const catId = document.getElementById('edit-category').value;
-    const isPinned = document.getElementById('toggle-pin').dataset.active === 'true';
-    const hasLock = document.getElementById('toggle-lock').dataset.active === 'true';
-    const themeId = document.querySelector('#editor-modal .dialog-content').dataset.themeId;
+    const titleEl = document.getElementById('edit-title');
+    const contentEl = document.getElementById('edit-content');
+    const catSelect = document.getElementById('edit-category');
+    const dialogContent = document.querySelector('#editor-modal .dialog-content');
+
+    if (!titleEl || !contentEl) return;
+
+    let title = titleEl.value.trim();
+    const content = contentEl.innerHTML;
+    const catId = catSelect ? catSelect.value : '';
+    const themeId = dialogContent ? dialogContent.dataset.themeId : 'default';
 
     if (!title) {
         const now = new Date();
@@ -576,7 +470,12 @@ export async function saveActiveNote(shouldClose = true) {
     }
 
     const noteIndex = state.notes.findIndex(n => n.id === state.editingNoteId);
-    const tempHash = document.getElementById('toggle-lock').dataset.tempHash;
+    const pinEl = document.getElementById('opt-toggle-pin');
+    const lockEl = document.getElementById('opt-toggle-lock');
+
+    const isPinned = pinEl ? pinEl.dataset.active === 'true' : false;
+    const hasLock = lockEl ? lockEl.dataset.active === 'true' : false;
+    const tempHash = lockEl ? lockEl.dataset.tempHash || '' : '';
 
     const noteData = {
         id: state.editingNoteId || Date.now().toString(),
@@ -590,6 +489,7 @@ export async function saveActiveNote(shouldClose = true) {
     };
 
     if (hasLock && !noteData.passwordHash) {
+        // Fallback safety (should be handled by toggleLock)
         const pass = await openPrompt('Seguridad', 'Establece una contraseña para esta nota:');
         if (pass) noteData.passwordHash = await Security.hashPassword(pass);
         else return;
@@ -598,7 +498,6 @@ export async function saveActiveNote(shouldClose = true) {
     if (noteIndex >= 0) state.notes[noteIndex] = noteData;
     else state.notes.unshift(noteData);
 
-    // Update the ID in state if it was a new note
     if (!state.editingNoteId) state.editingNoteId = noteData.id;
 
     await saveLocal();
@@ -634,35 +533,35 @@ function updateCategoryUI() {
 }
 
 function updatePinUI(active) {
-    const btn = document.getElementById('toggle-pin');
-    btn.dataset.active = active;
-    btn.classList.toggle('active', active);
+    const btn = document.getElementById('opt-toggle-pin');
+    if (!btn) return;
+    btn.dataset.active = active.toString();
 
-    // Clear inline styles when active so CSS .active class can apply its colors
-    if (active) {
-        btn.style.backgroundColor = '';
-        btn.style.color = '';
-        btn.style.borderColor = '';
-    }
+    const label = document.getElementById('opt-pin-label');
+    const icon = document.getElementById('opt-pin-icon');
+
+    if (label) label.innerText = active ? 'Desfijar nota' : 'Fijar nota';
+    if (icon) icon.setAttribute('class', active ? 'w-4 h-4 text-violet-600' : 'w-4 h-4 text-muted-foreground');
+
+    btn.classList.toggle('menu-active-violet', active);
 }
 
 function updateLockUI(active) {
-    const btn = document.getElementById('toggle-lock');
-    btn.dataset.active = active;
-    btn.classList.toggle('active', active);
+    const btn = document.getElementById('opt-toggle-lock');
+    if (!btn) return;
+    btn.dataset.active = active.toString();
 
-    // Clear inline styles when active so CSS .active class can apply its colors
-    if (active) {
-        btn.style.backgroundColor = '';
-        btn.style.color = '';
-        btn.style.borderColor = '';
-    }
+    const label = document.getElementById('opt-lock-label');
+    const icon = document.getElementById('opt-lock-icon');
 
-    const icon = btn.querySelector('[data-lucide]');
+    if (label) label.innerText = active ? 'Quitar protección' : 'Proteger con contraseña';
     if (icon) {
         icon.setAttribute('data-lucide', active ? 'lock' : 'lock-open');
-        safeCreateIcons();
+        icon.setAttribute('class', active ? 'w-4 h-4 text-violet-600' : 'w-4 h-4 text-muted-foreground');
     }
+
+    btn.classList.toggle('menu-active-violet', active);
+    safeCreateIcons();
 }
 
 function initPopovers() {
@@ -672,8 +571,15 @@ function initPopovers() {
 
     document.getElementById('open-text-colors').onmousedown = (e) => { e.preventDefault(); saveSelection(); };
     document.getElementById('open-text-colors').onclick = (e) => togglePopover(e, 'text-color-popover');
-    document.getElementById('open-emojis').onmousedown = (e) => { e.preventDefault(); saveSelection(); };
-    document.getElementById('open-emojis').onclick = (e) => togglePopover(e, 'emoji-popover');
+
+    const emojiTrigger = (e) => { e.preventDefault(); saveSelection(); togglePopover(e, 'emoji-popover'); };
+    document.getElementById('open-emojis').onmousedown = (e) => e.preventDefault();
+    document.getElementById('open-emojis').onclick = emojiTrigger;
+    const mobileEmojiBtn = document.getElementById('mobile-open-emojis');
+    if (mobileEmojiBtn) {
+        mobileEmojiBtn.onmousedown = (e) => e.preventDefault();
+        mobileEmojiBtn.onclick = emojiTrigger;
+    }
 
     const bgGrid = document.getElementById('bg-color-grid');
     NOTE_THEMES.forEach(theme => {
@@ -736,15 +642,12 @@ function togglePopover(e, id) {
     hidePopovers(id);
     pop.classList.remove('hidden');
 
-    // Smart positioning
-    const popHeight = 250; // estimate
+    const popHeight = 250;
     const spaceBelow = window.innerHeight - rect.bottom;
 
     if (spaceBelow < popHeight) {
-        pop.style.top = `${rect.top - pop.offsetHeight - 8}px`; // Should use real offsetHeight but it's hidden sometimes
-        // Fallback for first time or simple logic
-        pop.style.bottom = `${window.innerHeight - rect.top + 8}px`;
         pop.style.top = 'auto';
+        pop.style.bottom = `${window.innerHeight - rect.top + 8}px`;
     } else {
         pop.style.top = `${rect.bottom + 8}px`;
         pop.style.bottom = 'auto';

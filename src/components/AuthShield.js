@@ -34,6 +34,12 @@ export function getAuthShieldTemplate() {
                 </div>
 
                 <button id="auth-submit" class="btn-shad btn-shad-primary w-full h-11 font-bold">Desbloquear</button>
+                
+                <div id="auth-extra-actions" class="hidden pt-4 border-t border-border/50">
+                    <button id="auth-force-reload" class="flex items-center justify-center gap-2 w-full p-3 text-xs text-destructive bg-destructive/5 hover:bg-destructive/10 rounded-lg border border-destructive/10 transition-all font-medium">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ¿Problemas? Forzar limpieza y recarga
+                    </button>
+                </div>
             </div>
         </div>
     </div>`;
@@ -76,6 +82,20 @@ function showSetupPage() {
         submitBtn.innerText = "Crear mi Bóveda";
         submitBtn.classList.remove('btn-shad-primary');
         submitBtn.classList.add('btn-shad-success');
+    }
+
+    const extraActions = document.getElementById('auth-extra-actions');
+    if (extraActions) extraActions.classList.remove('hidden');
+
+    const forceBtn = document.getElementById('auth-force-reload');
+    if (forceBtn) {
+        forceBtn.onclick = () => {
+            if (confirm('Esto limpiará todos los datos locales y recargará la aplicación. ¿Continuar?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload(true);
+            }
+        };
     }
     safeCreateIcons();
 }

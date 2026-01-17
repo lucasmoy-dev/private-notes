@@ -170,6 +170,7 @@ function setupGlobalEvents() {
     const saveSettings = async () => {
         state.settings.drivePath = document.getElementById('config-drive-path').value;
         state.settings.algo = document.getElementById('config-algo').value;
+        state.settings.syncChunkSize = parseInt(document.getElementById('config-sync-chunk-size').value) || 100;
         await saveLocal();
         showToast('✅ Configuración guardada');
         triggerAutoSync();
@@ -410,7 +411,7 @@ function initGapi() {
                         if (!pass) return showToast('❌ Error: Sesión no válida');
 
                         try {
-                            const drive = new DriveSync('notev3_', state.settings.drivePath);
+                            const drive = new DriveSync('notev3_', state.settings.drivePath, state.settings.syncChunkSize);
                             const folderId = await drive.getOrCreateFolder(state.settings.drivePath);
                             const cloudData = await drive.loadChunks(folderId);
 
@@ -493,7 +494,7 @@ async function handleSync() {
     if (btn) btn.classList.add('text-primary');
 
     try {
-        const drive = new DriveSync('notev3_', state.settings.drivePath);
+        const drive = new DriveSync('notev3_', state.settings.drivePath, state.settings.syncChunkSize);
         const folderId = await drive.getOrCreateFolder(state.settings.drivePath);
 
         // 1. Download & Merge (Pull)
@@ -570,8 +571,21 @@ function openCategoryManager() {
 }
 
 function closeMobileSidebar() {
-    const el = document.getElementById('mobile-sidebar-overlay');
-    if (el) el.classList.add('hidden');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+    const drawer = document.getElementById('mobile-sidebar-drawer');
+    if (!overlay || overlay.classList.contains('hidden')) return;
+
+    if (drawer) {
+        drawer.classList.add('animate-out', 'slide-out-to-left');
+        overlay.classList.add('fade-out'); // We can add a simple fade out too if needed
+
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            drawer.classList.remove('animate-out', 'slide-out-to-left');
+        }, 200);
+    } else {
+        overlay.classList.add('hidden');
+    }
 }
 
 async function addCategory() {
@@ -616,6 +630,9 @@ function openSettings() {
         modal.classList.remove('hidden');
         document.getElementById('config-drive-path').value = state.settings.drivePath;
         document.getElementById('config-algo').value = state.settings.algo;
+        if (document.getElementById('config-sync-chunk-size')) {
+            document.getElementById('config-sync-chunk-size').value = state.settings.syncChunkSize || 100;
+        }
 
         // Reset to first tab
         const firstTab = modal.querySelector('.settings-tab[data-tab="appearance"]');
