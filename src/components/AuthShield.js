@@ -75,9 +75,13 @@ export async function checkAuthStatus(onSuccess) {
         showSetupPage();
     } else if (savedKey) {
         if (isBioEnabled) {
-            // If Bio is enabled, we DO NOT auto-login.
-            // We verify bio first.
-            // Shield remains visible.
+            // If Bio is enabled, auto-trigger biometric check
+            setTimeout(() => {
+                handleBiometricAuth(onSuccess).catch(() => {
+                    // If bio fails, just show login page
+                    console.log('Auto-bio failed, showing login');
+                });
+            }, 300);
         } else {
             // Auto-login (Legacy/Standard behavior)
             shield.classList.add('opacity-0', 'pointer-events-none');

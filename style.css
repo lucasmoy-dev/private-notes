@@ -348,8 +348,24 @@ textarea {
         @apply w-[95%] h-auto max-h-[92vh] rounded-3xl shadow-2xl border bg-background p-0 left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2 fixed !important;
     }
 
+
     #editor-modal .dialog-content {
         @apply w-full h-full max-w-none max-h-none rounded-none left-0 top-0 translate-x-0 translate-y-0 !important;
+    }
+
+    /* Mobile Bottom Nav - Remove shadow from add button */
+    #mobile-add-btn>div {
+        box-shadow: none !important;
+    }
+
+    /* Settings Modal - Fullscreen on Mobile */
+    #settings-modal .dialog-content {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
     }
 
     /* Hide Desktop Header on Mobile */

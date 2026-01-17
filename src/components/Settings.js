@@ -122,6 +122,25 @@ export function getSettingsTemplate() {
                     <!-- Panel: Seguridad -->
                     <div id="panel-security" class="settings-panel hidden space-y-6">
                         <section class="space-y-4">
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Biometric Authentication</h3>
+                            <div class="p-4 rounded-lg border bg-primary/5 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium">Fingerprint / Face ID</p>
+                                        <p class="text-xs text-muted-foreground">Use biometrics to unlock your vault</p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span id="bio-status-text" class="text-xs font-medium text-muted-foreground">Disabled</span>
+                                        <button id="toggle-biometric-btn" class="btn-shad btn-shad-outline h-9 px-4 flex items-center gap-2">
+                                            <i data-lucide="fingerprint" class="w-4 h-4"></i>
+                                            <span id="bio-toggle-text">Enable</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <section class="space-y-4 pt-4 border-t">
                             <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">${t('settings.session_security')}</h3>
                             <div class="p-4 rounded-lg border bg-muted/20 space-y-3">
                                 <p class="text-xs text-muted-foreground">${t('settings.logout_hint')}</p>
@@ -228,6 +247,95 @@ export function initSettings() {
             setLanguage(lang);
         };
     });
+
+    // Biometric Toggle Logic
+    const toggleBioBtn = document.getElementById('toggle-biometric-btn');
+    const bioStatusText = document.getElementById('bio-status-text');
+    const bioToggleText = document.getElementById('bio-toggle-text');
+
+    if (toggleBioBtn) {
+        // Update UI based on current state
+        const updateBioUI = () => {
+            const isEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
+            if (isEnabled) {
+                bioStatusText.textContent = 'Enabled';
+                bioStatusText.classList.add('text-primary');
+                bioToggleText.textContent = 'Disable';
+            } else {
+                bioStatusText.textContent = 'Disabled';
+                bioStatusText.classList.remove('text-primary');
+                bioToggleText.textContent = 'Enable';
+            }
+            safeCreateIcons();
+        };
+
+        updateBioUI();
+
+        toggleBioBtn.onclick = async () => {
+            const isEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
+
+            if (isEnabled) {
+                // Disable biometrics
+                localStorage.setItem('cn_bio_enabled', 'false');
+                updateBioUI();
+                const { showToast } = await import('../ui-utils.js');
+                showToast('🔓 Biometrics disabled');
+            } else {
+                // Enable biometrics - need to verify with password
+                const { handleBiometricAuth } = await import('./AuthShield.js');
+                const { showToast, openPrompt } = await import('../ui-utils.js');
+
+                if (!window.PublicKeyCredential) {
+                    return showToast('❌ Your device does not support biometrics');
+                }
+
+                try {
+                    const pass = await openPrompt('Enter your master password to enable biometrics', true);
+                    if (!pass || pass.biometric) return;
+
+                    const { SecurityService } = await import('../security.js');
+                    const authHash = await SecurityService.hash(pass);
+                    const existingHash = localStorage.getItem('cn_master_hash_v3');
+
+                    if (authHash !== existingHash) {
+                        return showToast('❌ Incorrect password');
+                    }
+
+                    // Create credential
+                    const challenge = new Uint8Array(32);
+                    window.crypto.getRandomValues(challenge);
+
+                    await navigator.credentials.create({
+                        publicKey: {
+                            challenge,
+                            rp: { name: "Private Notes", id: window.location.hostname },
+                            user: {
+                                id: new Uint8Array(16),
+                                name: "user",
+                                displayName: "User"
+                            },
+                            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                            timeout: 60000,
+                            authenticatorSelection: { authenticatorAttachment: "platform" },
+                            attestation: "none"
+                        }
+                    });
+
+                    // Save vault key for biometric access
+                    const vaultKey = await SecurityService.deriveVaultKey(pass);
+                    localStorage.setItem('cn_vault_key_v3', vaultKey);
+                    localStorage.setItem('cn_bio_enabled', 'true');
+
+                    updateBioUI();
+                    showToast('✅ Biometrics enabled');
+                } catch (e) {
+                    console.error(e);
+                    const { showToast } = await import('../ui-utils.js');
+                    showToast('❌ Failed to enable biometrics: ' + e.message);
+                }
+            }
+        };
+    }
 }
 
 export async function handleForceReload() {
