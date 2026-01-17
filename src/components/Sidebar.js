@@ -83,14 +83,15 @@ export function renderCategories(onViewChange, categories = null) {
                 }
             };
 
-            const borderColor = state.settings.theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
             btn.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-2.5 h-2.5 rounded-full shadow-sm" style="background-color: ${cat.color}; border: 1px solid ${borderColor}"></div>
-                    <span class="truncate">${cat.name}</span>
-                </div>
-                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    ${cat.passwordHash ? '<i data-lucide="lock" class="w-3 h-3 text-muted-foreground"></i>' : ''}
+                <div class="flex items-center justify-between w-full">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="tag" class="w-4 h-4" style="color: ${cat.color}"></i>
+                        <span class="truncate sidebar-label">${cat.name}</span>
+                    </div>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        ${cat.passwordHash ? '<i data-lucide="lock" class="w-3 h-3 text-muted-foreground"></i>' : ''}
+                    </div>
                 </div>
             `;
             return btn;

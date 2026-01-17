@@ -110,7 +110,8 @@ export function getEditorTemplate() {
                     <div class="relative flex-1 min-w-0" id="cat-select-wrapper">
                         <button id="cat-dropdown-trigger"
                             class="h-9 w-full px-2 rounded-md border border-input bg-background/50 text-xs flex items-center justify-between gap-1 hover:bg-accent transition-all">
-                            <span id="selected-cat-label" class="truncate">Sin categoría</span>
+                            <i data-lucide="tag" id="selected-cat-icon" class="w-3.5 h-3.5 text-muted-foreground/60"></i>
+                            <span id="selected-cat-label" class="truncate flex-1 text-left">Sin categoría</span>
                             <i data-lucide="chevron-down" class="w-3 h-3 text-muted-foreground shrink-0"></i>
                         </button>
                         <div id="cat-dropdown-menu"
@@ -336,7 +337,16 @@ export function initEditor(onSave) {
             if (clickX < 35) { // Increased hit area for touch
                 e.preventDefault();
                 li.dataset.checked = li.dataset.checked === 'true' ? 'false' : 'true';
-                saveActiveNote(); // Auto-save on toggle
+                // Save without closing
+                const title = document.getElementById('edit-title').value.trim();
+                const content = document.getElementById('edit-content').innerHTML;
+                const noteIndex = state.notes.findIndex(n => n.id === state.editingNoteId);
+                if (noteIndex >= 0) {
+                    state.notes[noteIndex].content = content;
+                    state.notes[noteIndex].updatedAt = Date.now();
+                    saveLocal();
+                    if (window.triggerAutoSync) window.triggerAutoSync();
+                }
                 updateToolsUI();
             }
         }
@@ -470,9 +480,9 @@ export async function saveActiveNote() {
     if (noteIndex >= 0) state.notes[noteIndex] = noteData;
     else state.notes.unshift(noteData);
 
-    if (window.refreshUI) window.refreshUI();
     await saveLocal();
     closeEditor();
+    if (window.refreshUI) window.refreshUI();
     if (window.triggerAutoSync) window.triggerAutoSync();
 }
 

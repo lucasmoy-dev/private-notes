@@ -127,7 +127,7 @@
     }
 
     .editor-tool.active {
-        @apply bg-primary text-primary-foreground border-primary shadow-sm;
+        @apply bg-primary/20 text-primary border-primary/30 shadow-sm;
         opacity: 1 !important;
     }
 
@@ -149,7 +149,7 @@
     }
 
     .note-card-content {
-        @apply p-5 flex flex-col h-full gap-2;
+        @apply p-6 flex flex-col h-full gap-3;
     }
 
     .note-card.pinned {
@@ -371,12 +371,9 @@ aside.collapsed {
     @apply w-16 !important;
 }
 
-aside.collapsed .nav-link span,
+aside.collapsed .sidebar-label,
 aside.collapsed .sidebar-section-title,
 aside.collapsed h1,
-aside.collapsed #sidebar-manage-cats span,
-aside.collapsed #settings-trigger span,
-aside.collapsed #sidebar-pwa-install-btn span,
 aside.collapsed #app-version {
     display: none !important;
 }
@@ -391,7 +388,11 @@ aside.collapsed .nav-link {
 
 /* Mobile Tools Menu */
 #mobile-tools-menu {
-    @apply absolute bottom-full left-0 mb-2 bg-popover border shadow-2xl rounded-xl p-1 z-[110] flex flex-col gap-0.5 min-w-[140px] animate-in slide-in-from-bottom-2 duration-200;
+    @apply absolute bottom-full left-0 mb-3 bg-popover border shadow-2xl rounded-2xl p-1 z-[120] flex-col gap-0.5 min-w-[200px] animate-in slide-in-from-bottom-2 duration-200 overflow-hidden;
+}
+
+#mobile-tools-menu.hidden {
+    display: none !important;
 }
 
 #mobile-tools-menu button {
@@ -622,4 +623,18 @@ ul.checklist li[data-checked="true"]::before {
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+@keyframes logo-rainbow {
+    0% {
+        filter: hue-rotate(0deg) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+    }
+
+    100% {
+        filter: hue-rotate(360deg) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+    }
+}
+
+.logo-animate {
+    animation: logo-rainbow 8s infinite linear;
 }
