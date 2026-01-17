@@ -71,7 +71,11 @@ export function renderNotes(onEdit) {
                     return;
                 }
                 state.unlockedNotes.add(note.id);
-                renderNotes(onEdit); // Re-render to show content
+                renderNotes(onEdit); // Re-render immediately to update icons and content
+
+                // Now that it's unlocked, let's open it
+                onEdit(note);
+                return;
             }
 
             onEdit(note);

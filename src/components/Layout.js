@@ -3,9 +3,18 @@ export function getLayoutTemplate() {
     <div id="app" class="flex h-screen overflow-hidden opacity-100 transition-opacity duration-300">
         <!-- Sidebar Desktop -->
         <aside class="w-64 hidden md:flex flex-col border-r bg-sidebar">
+            <style>
+                @keyframes logo-rainbow {
+                    0% { color: #6366f1; filter: drop-shadow(0 0 2px #6366f1); }
+                    33% { color: #ec4899; filter: drop-shadow(0 0 2px #ec4899); }
+                    66% { color: #10b981; filter: drop-shadow(0 0 2px #10b981); }
+                    100% { color: #6366f1; filter: drop-shadow(0 0 2px #6366f1); }
+                }
+                .logo-animate { animation: logo-rainbow 8s infinite linear; }
+            </style>
             <div class="p-6 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 p-2 flex items-center justify-center border border-primary/20 shadow-inner">
-                    <svg viewBox="0 0 24 24" fill="none" class="w-full h-full text-primary" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-full h-full logo-animate" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
                     </svg>
                 </div>
@@ -43,7 +52,7 @@ export function getLayoutTemplate() {
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Cerrar Bóveda
                 </button>
                 <div class="mt-auto pt-4 border-t border-border/20 px-4">
-                    <div id="app-version" class="text-[9px] text-muted-foreground font-mono opacity-30">v3.3.3</div>
+                    <div id="app-version" class="text-[9px] text-muted-foreground font-mono opacity-30">v3.3.4</div>
                 </div>
             </div>
         </aside>

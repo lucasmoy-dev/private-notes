@@ -306,16 +306,17 @@ function initGapi() {
                     scope: "https://www.googleapis.com/auth/drive.file",
                     callback: (resp) => {
                         if (resp.error) return showToast('❌ Error de vinculación');
-                        sessionStorage.setItem('gdrive_token', JSON.stringify(resp));
+                        localStorage.setItem('gdrive_token_v3', JSON.stringify(resp));
                         updateDriveStatus(true);
                         showToast('✅ Vinculado con Google Drive');
                     },
                 });
 
                 // Check if we already have a token
-                const hasToken = sessionStorage.getItem('gdrive_token');
+                const hasToken = localStorage.getItem('gdrive_token_v3');
                 if (hasToken) {
-                    gapi.client.setToken(JSON.parse(hasToken));
+                    const token = JSON.parse(hasToken);
+                    gapi.client.setToken(token);
                     updateDriveStatus(true);
                 } else {
                     updateDriveStatus(false);
@@ -373,7 +374,8 @@ async function handleSync() {
 }
 
 function triggerAutoSync() {
-    if (state.gapiLoaded && gapi.auth.getToken()) {
+    const hasToken = localStorage.getItem('gdrive_token_v3');
+    if (state.gapiLoaded && hasToken) {
         handleSync();
     }
 }
