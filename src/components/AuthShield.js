@@ -26,6 +26,12 @@ export function getAuthShieldTemplate() {
                         <i data-lucide="eye" class="w-4 h-4 icon-show"></i>
                     </button>
                 </div>
+                
+                <div class="flex items-center gap-2 py-1">
+                    <input type="checkbox" id="auth-remember" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
+                    <label for="auth-remember" class="text-xs text-muted-foreground cursor-pointer select-none">Recordar mi contraseña en este navegador</label>
+                </div>
+
                 <button id="auth-submit" class="btn-shad btn-shad-primary w-full h-11 font-bold">Desbloquear</button>
             </div>
         </div>
@@ -106,12 +112,16 @@ export async function handleMasterAuth(onSuccess) {
     const hash = await Security.hashPassword(pass);
     const existingHash = localStorage.getItem('cn_master_hash_v3');
 
+    const remember = document.getElementById('auth-remember').checked;
     if (!existingHash) {
         localStorage.setItem('cn_master_hash_v3', hash);
         sessionStorage.setItem('cn_pass_plain_v3', pass);
+        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
         showToast('✅ Bóveda creada con éxito');
     } else if (existingHash === hash) {
         sessionStorage.setItem('cn_pass_plain_v3', pass);
+        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
+        else localStorage.removeItem('cn_pass_plain_v3');
         showToast('Bóveda abierta');
     } else {
         return showToast('❌ Contraseña incorrecta');

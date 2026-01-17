@@ -47,14 +47,16 @@ export function getEditorTemplate() {
                                 <div class="w-4 h-[2px] bg-primary rounded-full -mt-1"></div>
                             </div>
                         </button>
-                        <div id="mobile-tools-menu" class="hidden absolute left-0 top-full mt-1 bg-popover border shadow-2xl rounded-xl p-1 z-[120] min-w-[160px] flex flex-col gap-1">
-                            <button data-command="bold" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Negrita"><i data-lucide="bold" class="w-4 h-4"></i> Negrita</button>
-                            <button data-command="italic" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Cursiva"><i data-lucide="italic" class="w-4 h-4"></i> Cursiva</button>
-                            <button data-command="underline" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Subrayado"><i data-lucide="underline" class="w-4 h-4"></i> Subrayado</button>
-                            <button data-command="insertUnorderedList" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Lista"><i data-lucide="list" class="w-4 h-4"></i> Lista de viñetas</button>
-                            <button data-command="insertOrderedList" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Enumeración"><i data-lucide="list-ordered" class="w-4 h-4"></i> Lista numerada</button>
-                            <button id="mobile-link-btn" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Hipervínculo"><i data-lucide="link" class="w-4 h-4"></i> Enlace</button>
-                            <button id="mobile-text-color-btn" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors" title="Color de texto">
+                        <div id="mobile-tools-menu" class="hidden absolute left-0 bottom-full mb-3 bg-popover border shadow-2xl rounded-xl p-1 z-[120] min-w-[180px] gap-1 overflow-hidden animate-in slide-in-from-bottom-2">
+                            <button data-command="bold" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="bold" class="w-4 h-4"></i> Negrita</button>
+                            <button data-command="italic" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="italic" class="w-4 h-4"></i> Cursiva</button>
+                            <button data-command="underline" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="underline" class="w-4 h-4"></i> Subrayado</button>
+                            <div class="h-px bg-border my-1 mx-2"></div>
+                            <button data-command="insertUnorderedList" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="list" class="w-4 h-4"></i> Lista</button>
+                            <button data-command="insertOrderedList" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="list-ordered" class="w-4 h-4"></i> Numeración</button>
+                            <div class="h-px bg-border my-1 mx-2"></div>
+                            <button id="mobile-link-btn" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"><i data-lucide="link" class="w-4 h-4"></i> Enlace</button>
+                            <button id="mobile-text-color-btn" class="flex items-center gap-3 w-full px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors">
                                 <i data-lucide="palette" class="w-4 h-4"></i> Color de Texto
                             </button>
                         </div>
@@ -287,14 +289,29 @@ export function initEditor(onSave) {
 
     const toggleChecklist = () => {
         restoreSelection();
-        document.execCommand('insertUnorderedList');
         const selection = window.getSelection();
         if (selection.rangeCount > 0) {
-            let node = selection.focusNode;
-            while (node && node.nodeName !== 'UL') node = node.parentNode;
-            if (node) {
-                node.classList.add('checklist');
-                node.querySelectorAll('li').forEach(li => li.dataset.checked = 'false');
+            const range = selection.getRangeAt(0);
+            const parentLi = range.commonAncestorContainer.parentElement?.closest('li');
+
+            if (parentLi && parentLi.parentElement.classList.contains('checklist')) {
+                // Already in a checklist, remove it (standard list)
+                parentLi.parentElement.classList.remove('checklist');
+            } else {
+                document.execCommand('insertUnorderedList');
+                setTimeout(() => {
+                    const sel = window.getSelection();
+                    if (sel.rangeCount > 0) {
+                        let node = sel.focusNode;
+                        while (node && node.nodeName !== 'UL' && node !== contentEl) node = node.parentNode;
+                        if (node && node.nodeName === 'UL') {
+                            node.classList.add('checklist');
+                            node.querySelectorAll('li').forEach(li => {
+                                if (!li.dataset.checked) li.dataset.checked = 'false';
+                            });
+                        }
+                    }
+                }, 10);
             }
         }
         updateToolsUI();
@@ -347,6 +364,12 @@ function updateToolsUI() {
             btn.classList.toggle('active', active);
         } catch (e) { }
     });
+
+    const pinBtn = document.getElementById('toggle-pin');
+    if (pinBtn) pinBtn.classList.toggle('active', pinBtn.dataset.active === 'true');
+
+    const lockBtn = document.getElementById('toggle-lock');
+    if (lockBtn) lockBtn.classList.toggle('active', lockBtn.dataset.active === 'true');
 }
 
 export function openEditor(note = null) {

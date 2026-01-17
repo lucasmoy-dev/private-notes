@@ -22,8 +22,11 @@ import { renderNotes } from './src/components/NotesGrid.js';
 async function initApp() {
     console.log("Iniciando aplicación modular...");
 
-    // 0. Security Cleanup
-    localStorage.removeItem('cn_pass_plain_v3');
+    // 0. Security Cleanup - Only removed if not remembered
+    const rememberedPass = localStorage.getItem('cn_pass_plain_v3');
+    if (rememberedPass) {
+        sessionStorage.setItem('cn_pass_plain_v3', rememberedPass);
+    }
 
     // 1. Inject UI Structure IMMEDIATELY
     injectAppStructure();
@@ -39,16 +42,28 @@ async function initApp() {
     // 4. Setup Global Events
     setupGlobalEvents();
 
-    // 5. Auth Check
+    // 5. Version check for auto-update
+    const lastVersion = localStorage.getItem('cn_last_version');
+    if (lastVersion && lastVersion !== APP_VERSION) {
+        localStorage.setItem('cn_last_version', APP_VERSION);
+        console.log(`Nueva versión detectada (${APP_VERSION}). Recargando...`);
+        showToast('🚀 Actualizando a la última versión...');
+        setTimeout(() => location.reload(true), 1500);
+        return;
+    }
+    localStorage.setItem('cn_last_version', APP_VERSION);
+
+    // 6. Auth Check
     await checkAuthStatus(refreshUI);
 
-    // 6. Final UI Polish
+    // 7. Final UI Polish
     initSearch();
     initMobileNav();
     initPWA();
     initGapi();
     registerSW();
     injectVersion();
+    applySidebarState();
     safeCreateIcons();
 
     console.log("Aplicación lista.");
@@ -131,13 +146,12 @@ function setupGlobalEvents() {
         closeMobileSidebar();
         openSettings();
     });
-    bindClick('sidebar-toggle-btn', () => {
+    bindClick('sidebar-collapse-btn', () => {
         const sidebar = document.querySelector('aside');
         sidebar.classList.toggle('collapsed');
-        const icon = document.getElementById('sidebar-toggle-btn').querySelector('i');
         const isCollapsed = sidebar.classList.contains('collapsed');
-        icon.setAttribute('data-lucide', isCollapsed ? 'panel-left-open' : 'panel-left-close');
-        safeCreateIcons();
+        localStorage.setItem('sidebar_collapsed', isCollapsed);
+        updateSidebarUI();
     });
 
     bindClick('mobile-force-reload-btn', handleForceReload);
@@ -442,7 +456,7 @@ function initGapi() {
 
 function handleGoogleAuth() {
     if (!state.tokenClient) return showToast('Google API no lista');
-    state.tokenClient.requestAccessToken({ prompt: 'consent' });
+    state.tokenClient.requestAccessToken({ prompt: '' });
 }
 
 function updateDriveStatus(connected) {
@@ -596,6 +610,26 @@ function openSettings() {
         // Reset to first tab
         const firstTab = modal.querySelector('.settings-tab[data-tab="appearance"]');
         if (firstTab) firstTab.click();
+    }
+}
+
+function applySidebarState() {
+    const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+    const sidebar = document.querySelector('aside');
+    if (sidebar && isCollapsed) {
+        sidebar.classList.add('collapsed');
+        updateSidebarUI();
+    }
+}
+
+function updateSidebarUI() {
+    const sidebar = document.querySelector('aside');
+    if (!sidebar) return;
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    const icon = document.getElementById('sidebar-collapse-icon');
+    if (icon) {
+        icon.setAttribute('data-lucide', isCollapsed ? 'chevrons-right' : 'chevrons-left');
+        safeCreateIcons();
     }
 }
 

@@ -12,15 +12,20 @@ export function getLayoutTemplate() {
                 }
                 .logo-animate { animation: logo-rainbow 8s infinite linear; }
             </style>
-            <div class="p-6 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 p-2 flex items-center justify-center border border-primary/20 shadow-inner">
-                    <svg viewBox="0 0 24 24" fill="none" class="w-full h-full logo-animate" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                    </svg>
+            <div class="p-6 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 overflow-hidden" id="sidebar-logo-container">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 p-2 flex items-center justify-center border border-primary/20 shadow-inner shrink-0">
+                        <svg viewBox="0 0 24 24" fill="none" class="w-full h-full logo-animate" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <div class="sidebar-title-text transition-opacity duration-300">
+                        <h1 class="text-sm font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent truncate">Private Notes</h1>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-sm font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Private Notes</h1>
-                </div>
+                <button id="sidebar-collapse-btn" class="p-2 hover:bg-accent rounded-md text-muted-foreground transition-all shrink-0" title="Contraer menú">
+                    <i data-lucide="chevrons-left" class="w-4 h-4" id="sidebar-collapse-icon"></i>
+                </button>
             </div>
 
             <div class="flex-1 overflow-y-auto px-4 space-y-8">
