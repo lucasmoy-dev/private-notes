@@ -83,7 +83,12 @@ export function getSettingsTemplate() {
                                 <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Google Drive</h3>
                                 <div id="drive-status" class="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-bold uppercase">Desconectado</div>
                             </div>
-                            <div class="space-y-2">
+                            
+                            <button id="connect-drive-btn" class="btn-shad btn-shad-outline w-full h-10 flex items-center justify-center gap-2">
+                                <i data-lucide="link" class="w-4 h-4"></i> Conectar con Google Drive
+                            </button>
+
+                            <div class="space-y-2 pt-4 border-t border-dashed">
                                 <label class="text-xs font-medium">Nombre de carpeta en Drive</label>
                                 <input type="text" id="config-drive-path" class="h-10 px-4 w-full" placeholder="p.ej. CloudNotesV3" autocomplete="off">
                                 <p class="text-[10px] text-muted-foreground">Las notas se guardarán encriptadas dentro de esta carpeta.</p>
@@ -91,14 +96,11 @@ export function getSettingsTemplate() {
                             <div class="space-y-2">
                                 <label class="text-xs font-medium">Límite de tamaño por archivo (KBs)</label>
                                 <div class="flex items-center gap-3">
-                                    <input type="number" id="config-sync-chunk-size" class="h-10 px-4 w-full" placeholder="100" min="10" max="1000">
+                                    <input type="number" id="config-sync-chunk-size" class="h-10 px-4 w-full" placeholder="500" min="10" max="2000">
                                     <span class="text-xs text-muted-foreground shrink-0 font-bold">KB</span>
                                 </div>
                                 <p class="text-[10px] text-muted-foreground">Define cuánto pesará cada archivo subido (el sistema agrupará tus notas en varios trozos).</p>
                             </div>
-                            <button id="connect-drive-btn" class="btn-shad btn-shad-outline w-full h-10 flex items-center justify-center gap-2">
-                                <i data-lucide="link" class="w-4 h-4"></i> Conectar con Google Drive
-                            </button>
                             <button id="save-sync-config" class="btn-shad btn-shad-primary w-full h-10">Guardar Cambios</button>
                         </section>
                     </div>
