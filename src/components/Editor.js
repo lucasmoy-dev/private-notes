@@ -110,11 +110,15 @@ export function getEditorTemplate() {
                             <div class="h-px bg-border my-1.5 mx-2"></div>
                             <button data-command="insertUnorderedList" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="list" class="w-4 h-4"></i> Lista</button>
                             <button data-command="insertOrderedList" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="list-ordered" class="w-4 h-4"></i> Numeración</button>
-                            <button id="checklist-btn-mobile" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="check-square" class="w-4 h-4"></i> Checklist</button>
                             <div class="h-px bg-border my-1.5 mx-2"></div>
                             <button id="mobile-link-btn" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="link" class="w-4 h-4"></i> Enlace</button>
                         </div>
+                        </div>
                     </div>
+
+                    <button id="checklist-btn-mobile" class="md:hidden editor-tool border border-input bg-background/50 transition-all shrink-0">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                    </button>
 
                     <button id="mobile-text-color-btn" class="md:hidden editor-tool border border-input bg-background/50 transition-all shrink-0">
                         <i data-lucide="palette" class="w-4 h-4 text-red-500"></i>
@@ -247,6 +251,11 @@ export function initEditor(onSave) {
         }
     };
 
+    const mobileChecklistBtn = document.getElementById('checklist-btn-mobile');
+    if (mobileChecklistBtn) {
+        mobileChecklistBtn.onclick = () => toggleChecklist();
+    }
+
     // Mobile format menu
     const formatTrigger = document.getElementById('mobile-format-trigger');
     const formatMenu = document.getElementById('mobile-tools-menu');
@@ -258,14 +267,6 @@ export function initEditor(onSave) {
     }
 
 
-
-    const mobileChecklistBtn = document.getElementById('checklist-btn-mobile');
-    if (mobileChecklistBtn) {
-        mobileChecklistBtn.onclick = () => {
-            toggleChecklist();
-            formatMenu.classList.add('hidden');
-        };
-    }
 
     document.getElementById('mobile-link-btn').onclick = () => {
         setupLinkAction();
@@ -413,10 +414,40 @@ function updateToolsUI() {
     // Checklist button feedback
     const checklistBtn = document.getElementById('checklist-btn');
     if (checklistBtn) {
-        // Since we implementation checklist as a custom type of list or block,
-        // we check for specific markers or use the list state as a proxy
-        const isList = document.queryCommandState('insertUnorderedList') || document.queryCommandState('insertOrderedList');
-        checklistBtn.classList.toggle('active', isList);
+        let isChecklist = false;
+        try {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let node = selection.anchorNode;
+                while (node && node.id !== 'edit-content') {
+                    if (node.nodeName === 'UL' && node.classList.contains('checklist')) {
+                        isChecklist = true;
+                        break;
+                    }
+                    node = node.parentNode;
+                }
+            }
+        } catch (e) { }
+        checklistBtn.classList.toggle('active', isChecklist);
+    }
+
+    const checklistBtnMobile = document.getElementById('checklist-btn-mobile');
+    if (checklistBtnMobile) {
+        let isChecklist = false;
+        try {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                let node = selection.anchorNode;
+                while (node && node.id !== 'edit-content') {
+                    if (node.nodeName === 'UL' && node.classList.contains('checklist')) {
+                        isChecklist = true;
+                        break;
+                    }
+                    node = node.parentNode;
+                }
+            }
+        } catch (e) { }
+        checklistBtnMobile.classList.toggle('active', isChecklist);
     }
 
     // Also update mobile trigger if active
