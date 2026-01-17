@@ -121,8 +121,8 @@ function bindClick(id, fn) {
 function setupGlobalEvents() {
     // Standard Buttons - Use delegation for more robustness or direct binding after injection
     // Standard Buttons
-    bindClick('add-note-btn', openEditor);
-    bindClick('mobile-add-btn', openEditor);
+    bindClick('add-note-btn', () => openEditor());
+    bindClick('mobile-add-btn', () => openEditor());
     bindClick('sync-btn', handleSync);
     bindClick('mobile-sync-btn', handleSync);
     bindClick('mobile-sync-btn-bottom', handleSync);
@@ -251,7 +251,6 @@ function initMobileNav() {
     };
     bindClick('mobile-sidebar-trigger', trigger);
     bindClick('mobile-sidebar-trigger-bottom', trigger);
-    bindClick('mobile-menu-trigger', trigger);
 
     bindClick('close-mobile-sidebar', closeMobileSidebar);
 

@@ -53,6 +53,9 @@ export function getEditorTemplate() {
                         <div id="cat-dropdown-menu"
                             class="absolute bottom-full mb-2 left-0 w-48 bg-popover border rounded-md shadow-xl hidden z-50 py-1 overflow-hidden">
                         </div>
+                        <select id="edit-category" class="hidden">
+                            <option value="">Sin categoría</option>
+                        </select>
                     </div>
                     <button id="toggle-pin" class="h-9 w-9 inline-flex items-center justify-center rounded-md border border-input bg-background/50 hover:bg-accent transition-all shrink-0">
                         <i data-lucide="pin" class="w-4 h-4"></i>
