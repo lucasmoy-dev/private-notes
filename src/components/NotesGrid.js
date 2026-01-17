@@ -1,6 +1,7 @@
 import { state, saveLocal } from '../state.js';
 import { NOTE_THEMES } from '../constants.js';
-import { safeCreateIcons, isColorDark } from '../ui-utils.js';
+import { safeCreateIcons, isColorDark, openPrompt, showToast } from '../ui-utils.js';
+import { Security } from '../auth.js';
 import Sortable from 'sortablejs';
 
 export function renderNotes(onEdit) {
@@ -63,16 +64,23 @@ export function renderNotes(onEdit) {
 
             // If note is locked and not yet unlocked in this session
             if (note.passwordHash && !state.unlockedNotes.has(note.id)) {
-                const pass = await openPrompt('Nota Protegida', 'Ingresa la contraseña para ver esta nota:');
-                if (!pass) return;
-                const hash = await Security.hashPassword(pass);
-                if (hash !== note.passwordHash) {
-                    showToast('❌ Contraseña incorrecta');
-                    return;
+                try {
+                    const pass = await openPrompt('Nota Protegida', 'Ingresa la contraseña para ver esta nota:');
+                    if (!pass) return;
+                    const hash = await Security.hashPassword(pass);
+                    if (hash !== note.passwordHash) {
+                        showToast('❌ Contraseña incorrecta');
+                        return;
+                    }
+                    state.unlockedNotes.add(note.id);
+                    // Open immediately
+                    onEdit(note);
+                    // Refresh grid in background to show content
+                    setTimeout(() => renderNotes(onEdit), 300);
+                } catch (err) {
+                    console.error('Error unlocking note:', err);
+                    showToast('❌ Error al desbloquear');
                 }
-                state.unlockedNotes.add(note.id);
-                onEdit(note);
-                setTimeout(() => renderNotes(onEdit), 500);
                 return;
             }
 
