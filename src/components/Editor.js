@@ -215,9 +215,11 @@ export function initEditor(onSave) {
         if (isFull) {
             content.classList.remove('fullscreen-mode');
             icon.setAttribute('data-lucide', 'maximize-2');
+            btn.classList.remove('active');
         } else {
             content.classList.add('fullscreen-mode');
             icon.setAttribute('data-lucide', 'minimize-2');
+            btn.classList.add('active');
         }
         safeCreateIcons();
     };
@@ -407,6 +409,15 @@ function updateToolsUI() {
 
     const lockBtn = document.getElementById('toggle-lock');
     if (lockBtn) lockBtn.classList.toggle('active', lockBtn.dataset.active === 'true');
+
+    // Checklist button feedback
+    const checklistBtn = document.getElementById('checklist-btn');
+    if (checklistBtn) {
+        // Since we implementation checklist as a custom type of list or block,
+        // we check for specific markers or use the list state as a proxy
+        const isList = document.queryCommandState('insertUnorderedList') || document.queryCommandState('insertOrderedList');
+        checklistBtn.classList.toggle('active', isList);
+    }
 
     // Also update mobile trigger if active
     const mobileFormatTrigger = document.getElementById('mobile-format-trigger');
