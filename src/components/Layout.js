@@ -5,11 +5,11 @@ export function getLayoutTemplate() {
         <aside class="w-64 hidden md:flex flex-col border-r bg-sidebar">
             <div class="p-6 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20">
-                    <img src="./icons/logo.png" alt="CloudNotes" class="w-full h-full object-contain">
+                    <img src="./icons/logo.png" alt="Private Notes" class="w-full h-full object-contain">
                 </div>
                 <div>
-                    <h1 class="text-sm font-semibold leading-none">CloudNotes</h1>
-                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Pro Edition</span>
+                    <h1 class="text-sm font-semibold leading-none">Private Notes</h1>
+                    <span class="text-[10px] text-muted-foreground uppercase tracking-wider">Bóveda Personal</span>
                 </div>
             </div>
 
@@ -23,29 +23,29 @@ export function getLayoutTemplate() {
                 <div class="space-y-4">
                     <div class="flex items-center justify-between px-4">
                         <h3 class="sidebar-section-title text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Etiquetas</h3>
-                        <button id="sidebar-manage-cats" class="text-[10px] bg-muted hover:bg-accent px-2 py-1 rounded border transition-colors font-bold uppercase text-muted-foreground hover:text-foreground">
-                            Gestionar
-                        </button>
                     </div>
                     <div id="sidebar-categories" class="space-y-1"></div>
                 </div>
             </div>
 
             <div class="p-6 space-y-2 mt-auto">
+                <button id="sidebar-manage-cats" class="nav-link w-full text-xs opacity-60 hover:opacity-100">
+                    <i data-lucide="tag" class="w-3.5 h-3.5"></i> Gestionar Etiquetas
+                </button>
                 <button id="sync-btn" class="nav-link w-full text-xs opacity-60 hover:opacity-100">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronizar Bóveda
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Sincronización Cloud
                 </button>
                 <button id="settings-trigger" class="nav-link w-full text-xs opacity-60 hover:opacity-100">
-                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Configuración
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Preferencias
                 </button>
-                <button id="sidebar-pwa-install-btn" class="hidden nav-link w-full text-xs opacity-60 hover:opacity-100">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Instalar en PC
+                <button id="sidebar-pwa-install-btn" class="hidden nav-link w-full text-xs opacity-60 hover:opacity-100 bg-primary/10 text-primary border-primary/20">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Instalar Aplicación
                 </button>
                 <button id="logout-btn" class="nav-link w-full text-xs opacity-60 hover:opacity-100 text-destructive">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Cerrar Bóveda
                 </button>
                 <div class="mt-auto pt-4 border-t border-border/20 px-4">
-                    <div id="app-version" class="text-[9px] text-muted-foreground font-mono opacity-30">v3.2.8</div>
+                    <div id="app-version" class="text-[9px] text-muted-foreground font-mono opacity-30">v3.3.0</div>
                 </div>
             </div>
         </aside>
@@ -77,8 +77,8 @@ export function getLayoutTemplate() {
                         <i data-lucide="menu" class="w-5 h-5"></i>
                     </button>
                     <div class="flex items-center gap-2">
-                        <img src="./icons/logo.png" alt="Logo" class="w-6 h-6">
-                        <span class="font-bold tracking-tight text-lg">CloudNotes</span>
+                        <img src="./icons/logo.png" alt="Logo" class="w-6 h-6 rounded">
+                        <span class="font-bold tracking-tight text-lg">Private Notes</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-1">
@@ -135,8 +135,8 @@ export function getLayoutTemplate() {
             <div id="mobile-sidebar-drawer" class="w-[80vw] h-full bg-card border-r flex flex-col animate-in slide-in-from-left duration-300">
                 <div class="p-6 flex items-center justify-between border-b">
                     <div class="flex items-center gap-2">
-                        <img src="./icons/logo.png" alt="Logo" class="w-6 h-6">
-                        <span class="font-bold tracking-tight">CloudNotes</span>
+                        <img src="./icons/logo.png" alt="Logo" class="w-6 h-6 rounded">
+                        <span class="font-bold tracking-tight">Private Notes</span>
                     </div>
                     <button id="close-mobile-sidebar" class="p-2 hover:bg-accent rounded-md">
                         <i data-lucide="x" class="w-5 h-5"></i>
@@ -151,14 +151,14 @@ export function getLayoutTemplate() {
                     <div class="space-y-4">
                         <div class="flex items-center justify-between px-2">
                             <h3 class="sidebar-section-title">Etiquetas</h3>
-                            <button id="mobile-manage-cats" class="text-[10px] bg-muted hover:bg-accent px-2 py-1 rounded border transition-colors font-bold uppercase text-muted-foreground hover:text-foreground">
-                                Gestionar
-                            </button>
                         </div>
                         <div id="mobile-sidebar-categories" class="space-y-1 px-2"></div>
                     </div>
                 </div>
                 <div class="p-6 border-t space-y-2">
+                    <button id="mobile-manage-cats" class="flex items-center gap-3 w-full p-3 rounded-md hover:bg-accent text-sm">
+                        <i data-lucide="tag" class="w-4 h-4"></i> Gestionar Etiquetas
+                    </button>
                     <button id="mobile-sync-btn" class="flex items-center gap-3 w-full p-3 rounded-md hover:bg-accent text-sm">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar
                     </button>

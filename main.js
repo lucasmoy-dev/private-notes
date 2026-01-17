@@ -22,6 +22,9 @@ import { renderNotes } from './src/components/NotesGrid.js';
 async function initApp() {
     console.log("Iniciando aplicación modular...");
 
+    // 0. Security Cleanup
+    localStorage.removeItem('cn_pass_plain_v3');
+
     // 1. Inject UI Structure IMMEDIATELY
     injectAppStructure();
 
@@ -44,6 +47,7 @@ async function initApp() {
     initMobileNav();
     initPWA();
     initGapi();
+    registerSW();
     injectVersion();
     safeCreateIcons();
 
@@ -255,6 +259,19 @@ function initMobileNav() {
     });
 }
 
+function registerSW() {
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swPath = import.meta.env.DEV ? '/sw.js' : './sw.js';
+            navigator.serviceWorker.register(swPath).then(reg => {
+                console.log('SW registrado corectamente:', reg.scope);
+            }).catch(err => {
+                console.log('Fallo al registrar SW:', err);
+            });
+        });
+    }
+}
+
 function initPWA() {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -321,7 +338,7 @@ function updateDriveStatus(connected) {
 }
 
 async function handleSync() {
-    const pass = sessionStorage.getItem('cn_pass_plain_v3') || localStorage.getItem('cn_pass_plain_v3');
+    const pass = sessionStorage.getItem('cn_pass_plain_v3');
     if (!pass) return showToast('Error de sesión');
     showToast('Sincronizando con la nube...');
     try {

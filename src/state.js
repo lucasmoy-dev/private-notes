@@ -5,7 +5,7 @@ export const state = {
     categories: [],
     settings: {
         theme: 'dark',
-        drivePath: 'CloudNotes_Backup',
+        drivePath: '/backup/notes/',
         algo: 'aes-256-gcm'
     },
     currentView: 'all',
@@ -17,7 +17,7 @@ export const state = {
 };
 
 export async function saveLocal() {
-    const pass = sessionStorage.getItem('cn_pass_plain_v3') || localStorage.getItem('cn_pass_plain_v3');
+    const pass = sessionStorage.getItem('cn_pass_plain_v3');
     if (pass) {
         const encryptedNotes = await Security.encrypt(state.notes, pass);
         const encryptedCats = await Security.encrypt(state.categories, pass);

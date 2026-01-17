@@ -1,14 +1,11 @@
-const CACHE_NAME = 'cloud-notes-v3.0.2';
+const CACHE_NAME = 'private-notes-v1.0.0';
 const ASSETS = [
     './',
     './index.html',
-    './style.css',
-    './main.js',
     './manifest.json',
     './icons/icon-192.png',
     './icons/icon-512.png',
-    'https://unpkg.com/lucide@latest',
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+    'https://unpkg.com/lucide@latest'
 ];
 
 self.addEventListener('install', (event) => {

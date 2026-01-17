@@ -5,7 +5,7 @@
  */
 
 export class DriveSync {
-    constructor(dbFileName = 'chunk_', folderPath = 'database/notes') {
+    constructor(dbFileName = 'chunk_', folderPath = '/backup/notes/') {
         this.basePath = folderPath;
         this.dbPrefix = dbFileName;
         this.chunkSizeLimit = 100 * 1024; // 100KB

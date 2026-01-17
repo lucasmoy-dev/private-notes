@@ -26,10 +26,6 @@ export function getAuthShieldTemplate() {
                         <i data-lucide="eye" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <div class="flex items-center gap-2 px-1">
-                    <input type="checkbox" id="remember-me" class="w-4 h-4 rounded border-gray-300" checked>
-                    <label for="remember-me" class="text-xs text-muted-foreground cursor-pointer select-none">Recordar en este dispositivo</label>
-                </div>
                 <button id="auth-submit" class="btn-shad btn-shad-primary w-full">Desbloquear</button>
             </div>
         </div>
@@ -39,9 +35,7 @@ export function getAuthShieldTemplate() {
 export async function checkAuthStatus(onSuccess) {
     const shield = document.getElementById('auth-shield');
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
-    const savedPassLocal = localStorage.getItem('cn_pass_plain_v3');
-    const savedPassSession = sessionStorage.getItem('cn_pass_plain_v3');
-    const savedPass = savedPassLocal || savedPassSession;
+    const savedPass = sessionStorage.getItem('cn_pass_plain_v3');
 
     if (isSetup) {
         showSetupPage();
@@ -54,7 +48,6 @@ export async function checkAuthStatus(onSuccess) {
             await loadLocalEncrypted(savedPass);
             onSuccess();
         } else {
-            localStorage.removeItem('cn_pass_plain_v3');
             sessionStorage.removeItem('cn_pass_plain_v3');
             showLoginPage();
         }
@@ -98,7 +91,6 @@ function showLoginPage() {
 export async function handleMasterAuth(onSuccess) {
     const pass = document.getElementById('master-password').value;
     const confirmPass = document.getElementById('confirm-password').value;
-    const remember = document.getElementById('remember-me')?.checked;
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
 
     if (!pass) return showToast('Ingresa una contraseña');
@@ -114,11 +106,9 @@ export async function handleMasterAuth(onSuccess) {
 
     if (!existingHash) {
         localStorage.setItem('cn_master_hash_v3', hash);
-        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
         sessionStorage.setItem('cn_pass_plain_v3', pass);
         showToast('✅ Bóveda creada con éxito');
     } else if (existingHash === hash) {
-        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
         sessionStorage.setItem('cn_pass_plain_v3', pass);
         showToast('Bóveda abierta');
     } else {
