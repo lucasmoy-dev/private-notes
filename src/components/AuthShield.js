@@ -114,6 +114,20 @@ function showLoginPage() {
         submitBtn.classList.add('btn-shad-primary');
         submitBtn.classList.remove('btn-shad-success');
     }
+
+    const extraActions = document.getElementById('auth-extra-actions');
+    if (extraActions) extraActions.classList.remove('hidden');
+
+    const forceBtn = document.getElementById('auth-force-reload');
+    if (forceBtn) {
+        forceBtn.onclick = () => {
+            if (confirm('Esto limpiará todos los datos locales y recargará la aplicación. ¿Continuar?')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload(true);
+            }
+        };
+    }
     safeCreateIcons();
 }
 

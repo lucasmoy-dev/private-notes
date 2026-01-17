@@ -188,22 +188,14 @@ function setupGlobalEvents() {
     navLinks.forEach(btn => {
         btn.onclick = () => {
             const viewId = btn.dataset.view;
+            const currentCat = state.categories.find(c => c.id === viewId);
+            const title = currentCat ? currentCat.name : (viewId === 'all' ? 'Todas las notas' : '');
 
             // UI Update for active state
             navLinks.forEach(l => l.classList.toggle('active', l.dataset.view === viewId));
-            // Also deselect categories in Sidebar.js logic
-            document.querySelectorAll('#sidebar-categories .nav-link').forEach(l => l.classList.remove('active'));
-            // Ensure mobile category links are deselected when a general view is selected
-            document.querySelectorAll('.nav-link-mobile-drawer').forEach(l => {
-                l.classList.remove('active');
-                const icon = l.querySelector('i');
-                if (icon) icon.classList.remove('text-primary');
-                const span = l.querySelector('span');
-                if (span) span.classList.remove('text-primary');
-            });
 
-
-            onViewChange(viewId, viewId === 'all' ? 'Todas las notas' : '');
+            // Sync current state and header
+            onViewChange(viewId, title);
             closeMobileSidebar();
         };
     });

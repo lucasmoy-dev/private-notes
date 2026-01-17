@@ -101,10 +101,13 @@
     }
 
     .nav-link.active,
-    .nav-link-mobile.active,
     .nav-link-mobile-drawer.active {
         @apply text-violet-500 font-bold bg-violet-500/5 !important;
         @apply dark:text-violet-400 dark:bg-violet-500/10 !important;
+    }
+
+    .nav-link-mobile.active {
+        @apply text-primary font-bold !important;
     }
 
     .nav-link.active {
@@ -116,7 +119,7 @@
     }
 
     .nav-link-mobile.active i {
-        @apply scale-110 text-violet-500 transition-transform !important;
+        @apply scale-110 text-primary transition-transform !important;
     }
 
     .card-shad {
@@ -299,7 +302,7 @@ textarea {
 
 /* Custom Dropdown */
 #cat-dropdown-menu {
-    @apply bg-popover text-popover-foreground border shadow-2xl rounded-xl p-1.5 mt-2 min-w-[200px] z-[100];
+    @apply bg-popover text-popover-foreground border shadow-2xl rounded-xl p-1.5 mt-2 w-max min-w-[140px] max-w-[220px] z-[100];
     transform-origin: top left;
     animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }

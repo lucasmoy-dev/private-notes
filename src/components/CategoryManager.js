@@ -66,12 +66,12 @@ export function renderCategoryManager(onRefreshSidebar, categories = null) {
                 <input type="text" value="${cat.name}" 
                        class="bg-transparent border-none outline-none font-bold text-base w-full focus:ring-0 transition-colors h-7 px-0 rounded"
                        id="cn-${cat.id}" autocomplete="off">
-                <span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">${cat.passwordHash ? 'Protegida' : 'Pública'}</span>
+                <span class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">${cat.passwordHash ? 'Restringida' : 'Pública'}</span>
             </div>
             
             <div class="flex items-center gap-2">
                 <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-violet-500/10 transition-all ${cat.passwordHash ? 'text-violet-500 bg-violet-500/5 border border-violet-500/20' : 'text-muted-foreground border border-transparent'}"
-                        id="lock-${cat.id}" title="${cat.passwordHash ? 'Protegido' : 'Protección'}">
+                        id="lock-${cat.id}" title="${cat.passwordHash ? 'Restringido' : 'Restricción'}">
                     <i data-lucide="${cat.passwordHash ? 'lock' : 'unlock'}" class="w-4 h-4"></i>
                 </button>
                 <button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground border border-transparent transition-all"
@@ -163,7 +163,7 @@ async function deleteCat(id, onRefresh) {
     if (!cat) return;
 
     if (cat.passwordHash) {
-        const pass = await openPrompt('Seguridad', 'Etiqueta protegida. Ingresa contraseña para eliminar:');
+        const pass = await openPrompt('Seguridad', 'Etiqueta restringida. Ingresa contraseña para eliminar:');
         if (!pass) return;
         const hash = await Security.hash(pass);
         if (hash !== cat.passwordHash) return showToast('❌ Error: Contraseña incorrecta');
@@ -185,17 +185,17 @@ async function toggleLock(id, onRefresh) {
     if (!cat) return;
 
     if (cat.passwordHash) {
-        const pass = await openPrompt('Seguridad', 'Ingresa la contraseña para quitar la protección:');
+        const pass = await openPrompt('Seguridad', 'Ingresa la contraseña para quitar la restricción:');
         if (!pass) return;
         const hash = await Security.hash(pass);
         if (hash !== cat.passwordHash) return showToast('❌ Error: Contraseña incorrecta');
         cat.passwordHash = null;
-        showToast('🔓 Protección quitada');
+        showToast('🔓 Restricción quitada');
     } else {
-        const pass = await openPrompt('Seguridad', 'Define una contraseña para proteger esta etiqueta:');
+        const pass = await openPrompt('Seguridad', 'Define una contraseña para restringir esta etiqueta:');
         if (pass) {
             cat.passwordHash = await Security.hash(pass);
-            showToast('🔒 Etiqueta protegida');
+            showToast('🔒 Etiqueta restringida');
         }
     }
 

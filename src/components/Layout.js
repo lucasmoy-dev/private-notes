@@ -30,7 +30,7 @@ export function getLayoutTemplate() {
 
             <div class="flex-1 overflow-y-auto px-4 space-y-8">
                 <div class="space-y-1">
-                    <button class="nav-link active w-full" data-view="all">
+                    <button class="nav-link w-full" data-view="all">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i> <span class="sidebar-label text-foreground/90 font-bold">Todas las notas</span>
                     </button>
                 </div>
@@ -90,6 +90,7 @@ export function getLayoutTemplate() {
                     <div class="flex items-end justify-between">
                         <div>
                             <h1 id="view-title" class="text-3xl font-bold tracking-tight">Todas las notas</h1>
+                            <p id="view-desc" class="text-muted-foreground mt-1">Organiza tus pensamientos y protege tu privacidad.</p>
                         </div>
                     </div>
                     <div id="notes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
@@ -136,7 +137,7 @@ export function getLayoutTemplate() {
                 </div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-8">
                     <div class="space-y-1">
-                        <button class="nav-link-mobile-drawer active w-full" data-view="all">
+                        <button class="nav-link-mobile-drawer w-full" data-view="all">
                             <i data-lucide="layout-grid" class="w-4 h-4"></i> Todas las notas
                         </button>
                     </div>
