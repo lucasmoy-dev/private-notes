@@ -287,6 +287,13 @@ function setupGlobalEvents() {
     // Auth Submission
     bindClick('auth-submit', () => handleMasterAuth(refreshUI));
 
+    // Bind Biometric Button
+    bindClick('auth-biometric', () => {
+        import('./src/components/AuthShield.js').then(module => {
+            module.handleBiometricAuth(refreshUI);
+        });
+    });
+
     const resetConfirmInput = document.getElementById('factory-reset-confirm');
     const resetBtn = document.getElementById('factory-reset');
 

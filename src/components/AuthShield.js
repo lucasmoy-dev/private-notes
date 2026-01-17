@@ -1,5 +1,6 @@
 import { SecurityService as Security } from '../security.js';
 import { state, loadLocalEncrypted } from '../state.js';
+// ... imports
 import { showToast, safeCreateIcons } from '../ui-utils.js';
 
 export function getAuthShieldTemplate() {
@@ -35,6 +36,10 @@ export function getAuthShieldTemplate() {
 
                 <button id="auth-submit" class="btn-shad btn-shad-primary w-full h-11 font-bold">Desbloquear</button>
                 
+                <button id="auth-biometric" class="hidden btn-shad btn-shad-secondary w-full h-11 font-bold flex items-center justify-center gap-2">
+                     <i data-lucide="fingerprint" class="w-5 h-5"></i> <span id="bio-text">Usar Huella / FaceID</span>
+                </button>
+
                 <div id="auth-extra-actions" class="hidden pt-4 border-t border-border/50">
                     <button id="auth-force-reload" class="flex items-center justify-center gap-2 w-full p-3 text-xs text-destructive bg-destructive/5 hover:bg-destructive/10 rounded-lg border border-destructive/10 transition-all font-medium">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ¿Problemas? Forzar limpieza y recarga
@@ -48,102 +53,153 @@ export function getAuthShieldTemplate() {
 export async function checkAuthStatus(onSuccess) {
     const shield = document.getElementById('auth-shield');
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
-
-    // Check for both legacy and new key for migration/logout
     const savedKey = sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3');
+    const isBioEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
+
+    // Show bio button if supported and set up
+    const bioBtn = document.getElementById('auth-biometric');
+    if (window.PublicKeyCredential && bioBtn) {
+        bioBtn.classList.remove('hidden');
+        if (isBioEnabled) {
+            document.getElementById('bio-text').innerText = "Desbloquear con Huella";
+            // Auto-trigger bio check if enabled? 
+            // Maybe slightly delayed to avoid conflicts on load
+            // setTimeout(() => handleBiometricAuth(onSuccess), 500); 
+        } else {
+            document.getElementById('bio-text').innerText = "Activar Huella / FaceID";
+        }
+    }
 
     if (isSetup) {
         showSetupPage();
     } else if (savedKey) {
-        // Validation: The vault key itself isn't what we check against master_hash
-        // We need the plain password to generate the master_hash... 
-        // WAIT: If we ONLY have the vaultKey (hashed), we can't reconstruct the plain password to verify master_hash.
-        // DECISION: We will use the vaultKey AS the session credential. 
-        // To verify it, we can store a small encrypted "sentinel" or just rely on the fact that if it decrypts the notes, it's correct.
-        // But for UI, we can just say "if savedKey exists, we are good" (it was saved after a successful login).
+        if (isBioEnabled) {
+            // If Bio is enabled, we DO NOT auto-login.
+            // We verify bio first.
+            // Shield remains visible.
+        } else {
+            // Auto-login (Legacy/Standard behavior)
+            shield.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => shield.style.display = 'none', 300);
+            const appEl = document.getElementById('app');
+            if (appEl) appEl.classList.remove('opacity-0');
 
-        shield.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => shield.style.display = 'none', 300);
-        const appEl = document.getElementById('app');
-        if (appEl) appEl.classList.remove('opacity-0');
-
-        try {
-            await loadLocalEncrypted(savedKey);
-            onSuccess();
-        } catch (e) {
-            console.error("Auto-auth failed, clearing keys.");
-            sessionStorage.removeItem('cn_vault_key_v3');
-            localStorage.removeItem('cn_vault_key_v3');
-            showLoginPage();
+            try {
+                await loadLocalEncrypted(savedKey);
+                onSuccess();
+            } catch (e) {
+                console.error("Auto-auth failed, clearing keys.");
+                clearAuth();
+                showLoginPage();
+            }
         }
     } else {
         showLoginPage();
     }
 }
 
-function showSetupPage() {
-    const title = document.getElementById('auth-title');
-    const desc = document.getElementById('auth-desc');
-    const wrapper = document.getElementById('confirm-password-wrapper');
-    const submitBtn = document.getElementById('auth-submit');
-
-    if (title) title.innerText = "Configura tu Bóveda";
-    if (desc) desc.innerText = "Crea una contraseña maestra. Introduce la contraseña dos veces para asegurar que es correcta.";
-    if (wrapper) wrapper.classList.remove('hidden');
-    if (submitBtn) {
-        submitBtn.innerText = "Crear mi Bóveda";
-        submitBtn.classList.remove('btn-shad-primary');
-        submitBtn.classList.add('btn-shad-success');
-    }
-
-    const extraActions = document.getElementById('auth-extra-actions');
-    if (extraActions) extraActions.classList.remove('hidden');
-
-    const forceBtn = document.getElementById('auth-force-reload');
-    if (forceBtn) {
-        forceBtn.onclick = () => {
-            if (confirm('Esto limpiará todos los datos locales y recargará la aplicación. ¿Continuar?')) {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.reload(true);
-            }
-        };
-    }
-    safeCreateIcons();
+function clearAuth() {
+    sessionStorage.removeItem('cn_vault_key_v3');
+    localStorage.removeItem('cn_vault_key_v3');
 }
 
-function showLoginPage() {
-    const title = document.getElementById('auth-title');
-    const desc = document.getElementById('auth-desc');
-    const wrapper = document.getElementById('confirm-password-wrapper');
-    const submitBtn = document.getElementById('auth-submit');
+// ... existing showSetupPage and showLoginPage ...
 
-    if (title) title.innerText = "Bóveda Protegida";
-    if (desc) desc.innerText = "Ingresa tu contraseña maestra para continuar";
-    if (wrapper) wrapper.classList.add('hidden');
-    if (submitBtn) {
-        submitBtn.innerText = "Desbloquear";
-        submitBtn.classList.add('btn-shad-primary');
-        submitBtn.classList.remove('btn-shad-success');
-    }
+export async function handleBiometricAuth(onSuccess) {
+    const isEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
 
-    const extraActions = document.getElementById('auth-extra-actions');
-    if (extraActions) extraActions.classList.remove('hidden');
+    if (!isEnabled) {
+        // SETUP MODE
+        const pass = document.getElementById('master-password').value;
+        if (!pass) return showToast('⚠️ Ingresa tu contraseña primero para configurar');
 
-    const forceBtn = document.getElementById('auth-force-reload');
-    if (forceBtn) {
-        forceBtn.onclick = () => {
-            if (confirm('Esto limpiará todos los datos locales y recargará la aplicación. ¿Continuar?')) {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.reload(true);
+        const authHash = await Security.hash(pass);
+        const existingHash = localStorage.getItem('cn_master_hash_v3');
+
+        if (authHash !== existingHash) return showToast('❌ Contraseña incorrecta');
+
+        // Verify WebAuthn support
+        if (!window.PublicKeyCredential) return showToast('❌ Tu dispositivo no soporta biometría');
+
+        try {
+            // Create dummy credential to trigger permission
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            await navigator.credentials.create({
+                publicKey: {
+                    challenge,
+                    rp: { name: "Private Notes", id: window.location.hostname },
+                    user: {
+                        id: new Uint8Array(16),
+                        name: "user",
+                        displayName: "User"
+                    },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                    timeout: 60000,
+                    authenticatorSelection: { authenticatorAttachment: "platform" },
+                    attestation: "none"
+                }
+            });
+
+            // Save state
+            localStorage.setItem('cn_bio_enabled', 'true');
+            // Ensure key is saved for auto-retrieval
+            const vaultKey = await Security.deriveVaultKey(pass);
+            localStorage.setItem('cn_vault_key_v3', vaultKey);
+
+            showToast('✅ Huella activada');
+
+            // Login
+            finishLogin(vaultKey, onSuccess);
+        } catch (e) {
+            console.error(e);
+            showToast('❌ Error al activar biometría: ' + e.message);
+        }
+
+    } else {
+        // LOGIN MODE
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            await navigator.credentials.get({
+                publicKey: {
+                    challenge,
+                    rpId: window.location.hostname,
+                    userVerification: "required",
+                    timeout: 60000
+                }
+            });
+
+            // If success, get key
+            const vaultKey = localStorage.getItem('cn_vault_key_v3');
+            if (vaultKey) {
+                finishLogin(vaultKey, onSuccess);
+            } else {
+                showToast('❌ Error: Llave no encontrada. Ingresa contraseña.');
+                localStorage.setItem('cn_bio_enabled', 'false'); // Reset
             }
-        };
+
+        } catch (e) {
+            console.error(e);
+            showToast('❌ Autenticación biométrica fallida');
+        }
     }
-    safeCreateIcons();
+}
+
+async function finishLogin(vaultKey, onSuccess) {
+    const shield = document.getElementById('auth-shield');
+    shield.classList.add('opacity-0', 'pointer-events-none');
+    setTimeout(() => shield.style.display = 'none', 300);
+    document.getElementById('app').classList.remove('opacity-0');
+    sessionStorage.setItem('cn_vault_key_v3', vaultKey);
+    await loadLocalEncrypted(vaultKey);
+    onSuccess();
 }
 
 export async function handleMasterAuth(onSuccess) {
+    // ... (rest of handleMasterAuth mostly same, but need to check bio toggle logic)
     const pass = document.getElementById('master-password').value;
     const confirmPass = document.getElementById('confirm-password').value;
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
@@ -162,28 +218,25 @@ export async function handleMasterAuth(onSuccess) {
 
     const remember = document.getElementById('auth-remember').checked;
 
-    // MIGRATION: Clear legacy key
+    // MIGRATION
     localStorage.removeItem('cn_pass_plain_v3');
     sessionStorage.removeItem('cn_pass_plain_v3');
 
     if (!existingHash) {
         localStorage.setItem('cn_master_hash_v3', authHash);
-        sessionStorage.setItem('cn_vault_key_v3', vaultKey);
+        // If remembering, save key
         if (remember) localStorage.setItem('cn_vault_key_v3', vaultKey);
+        finishLogin(vaultKey, onSuccess);
         showToast('✅ Bóveda creada con éxito');
     } else if (existingHash === authHash) {
-        sessionStorage.setItem('cn_vault_key_v3', vaultKey);
         if (remember) localStorage.setItem('cn_vault_key_v3', vaultKey);
-        else localStorage.removeItem('cn_vault_key_v3');
+        // If Login with password, and bio is enabled, we keep bio enabled.
+        finishLogin(vaultKey, onSuccess);
         showToast('Bóveda abierta');
+
+        // After password login, if bio is NOT enabled but supported, maybe prompt? 
+        // User said "toco ahi Me pide la contraseña". So better explicit button click.
     } else {
         return showToast('❌ Contraseña incorrecta');
     }
-
-    const shield = document.getElementById('auth-shield');
-    shield.classList.add('opacity-0', 'pointer-events-none');
-    setTimeout(() => shield.style.display = 'none', 300);
-    document.getElementById('app').classList.remove('opacity-0');
-    await loadLocalEncrypted(vaultKey);
-    onSuccess();
 }
