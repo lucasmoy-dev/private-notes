@@ -124,24 +124,10 @@ export function initEditor(onSave) {
     contentEl.onmouseup = () => { saveSelection(); updateToolsUI(); };
     contentEl.onfocus = () => { saveSelection(); updateToolsUI(); };
 
-    // Checklist handler
-    contentEl.addEventListener('click', (e) => {
-        if (e.target.classList.contains('checklist-item')) {
-            e.target.dataset.checked = e.target.dataset.checked === 'true' ? 'false' : 'true';
-            updateChecklistStyle(e.target);
-        }
-    });
 
-    document.getElementById('add-checklist').onclick = () => {
-        restoreSelection();
-        const html = '<div class="checklist-item py-1 flex items-center gap-2 cursor-pointer" data-checked="false"><div class="w-4 h-4 border rounded shrink-0 flex items-center justify-center bg-white/10 checkbox-box"><i data-lucide="check" class="w-3 h-3 hidden"></i></div><span>Tarea</span></div><p><br></p>';
-        document.execCommand('insertHTML', false, html);
-        safeCreateIcons();
-        updateToolsUI();
-    };
 
     document.getElementById('add-link').onclick = async () => {
-        const url = await openPrompt('Insertar Enlace', 'Ingresa la URL:');
+        const url = await openPrompt('Insertar Enlace', 'Ingresa la URL:', false);
         if (url) {
             restoreSelection();
             document.execCommand('createLink', false, url.startsWith('http') ? url : 'https://' + url);
@@ -151,21 +137,45 @@ export function initEditor(onSave) {
         }
     };
 
+    // Tab for indentation
+    contentEl.onkeydown = (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            if (e.shiftKey) document.execCommand('outdent');
+            else document.execCommand('indent');
+        }
+    };
+
+    // Checklist handler
+    contentEl.addEventListener('click', (e) => {
+        const li = e.target.closest('.checklist li');
+        if (li && (e.offsetX < 30)) { // If clicked near the custom checkbox
+            li.dataset.checked = li.dataset.checked === 'true' ? 'false' : 'true';
+            saveSelection();
+            updateToolsUI();
+        }
+    });
+
+    document.getElementById('add-checklist').onclick = () => {
+        restoreSelection();
+        document.execCommand('insertUnorderedList');
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            let node = selection.focusNode;
+            while (node && node.nodeName !== 'UL') node = node.parentNode;
+            if (node) {
+                node.classList.add('checklist');
+                node.querySelectorAll('li').forEach(li => li.dataset.checked = 'false');
+            }
+        }
+        updateToolsUI();
+    };
+
     // Close on overlay click
     modal.querySelector('.dialog-overlay').onclick = closeEditor;
 }
 
-function updateChecklistStyle(el) {
-    const isChecked = el.dataset.checked === 'true';
-    const icon = el.querySelector('[data-lucide="check"]');
-    const box = el.querySelector('.checkbox-box');
-    const text = el.querySelector('span');
 
-    if (icon) icon.classList.toggle('hidden', !isChecked);
-    if (box) box.classList.toggle('bg-primary', isChecked);
-    if (text) text.classList.toggle('line-through', isChecked);
-    if (text) text.classList.toggle('opacity-50', isChecked);
-}
 
 function handleAutoLinks() {
     // Simple auto-linker on space or enter

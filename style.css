@@ -426,28 +426,53 @@ textarea:focus {
     margin-bottom: 0.25rem;
 }
 
-.checklist-item {
-    @apply transition-all duration-200 select-none;
+/* New Checklist Implementation */
+ul.checklist {
+    list-style-type: none;
+    padding-left: 1.5rem;
 }
 
-.checklist-item:hover {
-    @apply bg-accent/30;
+ul.checklist li {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding-left: 0.5rem;
 }
 
-.checklist-item .checkbox-box {
-    @apply border-2 border-primary/30 rounded-sm flex items-center justify-center transition-all bg-card;
+ul.checklist li::before {
+    content: '';
+    position: absolute;
+    left: -1.4rem;
+    top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(var(--primary), 0.3);
+    border-radius: 4px;
+    background: transparent;
+    transition: all 0.2s;
 }
 
-.checklist-item[data-checked="true"] .checkbox-box {
-    @apply bg-primary border-primary;
-}
-
-.checklist-item[data-checked="true"] span {
+ul.checklist li[data-checked="true"] {
     @apply line-through opacity-50;
 }
 
+ul.checklist li[data-checked="true"]::before {
+    @apply bg-primary border-primary;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 80%;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 #edit-content a {
-    @apply text-primary underline decoration-primary/30 hover:decoration-primary transition-all;
+    color: #3b82f6 !important;
+    /* Vibrant Blue */
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.dark #edit-content a {
+    color: #60a5fa !important;
 }
 
 /* Scrollbar Hide for toolbar */
