@@ -29,7 +29,7 @@ export function openPrompt(title, desc, isPassword = true) {
         const bioEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
 
         if (bioBtn) {
-            if (isPassword && bioEnabled && window.PublicKeyCredential) {
+            if (isPassword && window.PublicKeyCredential) {
                 bioBtn.classList.remove('hidden');
                 bioBtn.onclick = async () => {
                     try {
@@ -47,7 +47,8 @@ export function openPrompt(title, desc, isPassword = true) {
                         resolve({ biometric: true });
                     } catch (e) {
                         console.error("Bio Prompt Failed", e);
-                        showToast('❌ No se reconoció la huella');
+                        // If not allowed or failed, we just stay in the prompt
+                        showToast('⚠️ No se pudo verificar la huella');
                     }
                 };
             } else {
