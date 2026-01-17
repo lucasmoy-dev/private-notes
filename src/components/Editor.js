@@ -113,11 +113,12 @@ export function getEditorTemplate() {
                             <button id="checklist-btn-mobile" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="check-square" class="w-4 h-4"></i> Checklist</button>
                             <div class="h-px bg-border my-1.5 mx-2"></div>
                             <button id="mobile-link-btn" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium"><i data-lucide="link" class="w-4 h-4"></i> Enlace</button>
-                            <button id="mobile-text-color-btn" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-accent rounded-xl transition-colors font-medium">
-                                <i data-lucide="palette" class="w-4 h-4"></i> Color de Texto
-                            </button>
                         </div>
                     </div>
+
+                    <button id="mobile-text-color-btn" class="md:hidden editor-tool border border-input bg-background/50 transition-all shrink-0">
+                        <i data-lucide="palette" class="w-4 h-4 text-red-500"></i>
+                    </button>
                     
                     <button id="toggle-pin" class="editor-tool border border-input bg-background/50 transition-all shrink-0">
                         <i data-lucide="pin" class="w-4 h-4"></i>
@@ -181,6 +182,17 @@ export function initEditor(onSave) {
         }
     });
 
+    // Handle mobile drawer commands with mousedown too
+    document.querySelectorAll('#mobile-tools-menu button[data-command]').forEach(btn => {
+        btn.onmousedown = (e) => {
+            e.preventDefault();
+            restoreSelection();
+            document.execCommand(btn.dataset.command, false, null);
+            document.getElementById('mobile-tools-menu').classList.add('hidden');
+            updateToolsUI();
+        };
+    });
+
     initPopovers();
     contentEl.onkeyup = () => { saveSelection(); updateToolsUI(); handleAutoLinks(); };
     contentEl.onmouseup = () => { saveSelection(); updateToolsUI(); };
@@ -214,6 +226,7 @@ export function initEditor(onSave) {
     document.getElementById('toggle-pin').onclick = () => {
         const isActive = document.getElementById('toggle-pin').dataset.active === 'true';
         updatePinUI(!isActive);
+        saveActiveNote(false); // Quick save
     };
 
     document.getElementById('toggle-lock').onclick = async () => {
@@ -223,10 +236,12 @@ export function initEditor(onSave) {
             if (pass) {
                 state.tempEditorPassword = pass;
                 updateLockUI(true);
+                saveActiveNote(false); // Quick save
             }
         } else {
             updateLockUI(false);
             state.tempEditorPassword = null;
+            saveActiveNote(false); // Quick save
         }
     };
 
@@ -240,12 +255,7 @@ export function initEditor(onSave) {
         };
     }
 
-    formatMenu.querySelectorAll('button[data-command]').forEach(btn => {
-        btn.onclick = () => {
-            execCommand(btn.dataset.command);
-            formatMenu.classList.add('hidden');
-        };
-    });
+
 
     const mobileChecklistBtn = document.getElementById('checklist-btn-mobile');
     if (mobileChecklistBtn) {
@@ -448,15 +458,25 @@ export function openEditor(note = null) {
 }
 
 function closeEditor() {
-    state.editingNoteId = null;
-    document.getElementById('editor-modal').classList.add('hidden');
-    document.getElementById('toggle-lock').dataset.tempHash = '';
+    const modal = document.getElementById('editor-modal');
+    const content = modal.querySelector('.dialog-content');
 
-    // Clear sensitive fields in modal to avoid leaks after closing
-    document.getElementById('edit-title').value = '';
-    document.getElementById('edit-content').innerHTML = '';
+    // Add closing animation
+    content.classList.add('dialog-hide');
 
-    if (window.refreshUI) window.refreshUI();
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        content.classList.remove('dialog-hide');
+        state.editingNoteId = null;
+        state.tempEditorPassword = null;
+        document.getElementById('toggle-lock').dataset.tempHash = '';
+
+        // Clear sensitive fields in modal to avoid leaks after closing
+        document.getElementById('edit-title').value = '';
+        document.getElementById('edit-content').innerHTML = '';
+
+        if (window.refreshUI) window.refreshUI();
+    }, 200);
 }
 
 export async function saveActiveNote(shouldClose = true) {
@@ -624,8 +644,26 @@ function togglePopover(e, id) {
     const rect = e.currentTarget.getBoundingClientRect();
     hidePopovers(id);
     pop.classList.remove('hidden');
-    pop.style.top = `${rect.bottom + 8}px`;
-    pop.style.left = `${Math.min(rect.left, window.innerWidth - 300)}px`;
+
+    // Smart positioning
+    const popHeight = 250; // estimate
+    const spaceBelow = window.innerHeight - rect.bottom;
+
+    if (spaceBelow < popHeight) {
+        pop.style.top = `${rect.top - pop.offsetHeight - 8}px`; // Should use real offsetHeight but it's hidden sometimes
+        // Fallback for first time or simple logic
+        pop.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        pop.style.top = 'auto';
+    } else {
+        pop.style.top = `${rect.bottom + 8}px`;
+        pop.style.bottom = 'auto';
+    }
+
+    pop.style.left = `${Math.min(rect.left, window.innerWidth - pop.offsetWidth - 20)}px`;
+    if (rect.left + 300 > window.innerWidth) {
+        pop.style.left = 'auto';
+        pop.style.right = '20px';
+    }
 }
 
 function hidePopovers(exceptId = null) {

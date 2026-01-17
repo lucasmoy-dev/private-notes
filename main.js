@@ -578,12 +578,22 @@ async function addCategory() {
     const input = document.getElementById('new-cat-name');
     const name = input?.value.trim();
     if (!name) return;
-    state.categories.push({ id: 'cat_' + Date.now(), name, icon: 'tag', passwordHash: null });
+
+    // Add to state
+    const newCat = { id: 'cat_' + Date.now(), name, icon: 'tag', passwordHash: null };
+    state.categories.push(newCat);
+
+    // Save and Refresh
     await saveLocal();
     if (input) input.value = '';
+
+    // Re-render both manager and sidebar
     renderCategoryManager(refreshUI, state.categories);
     refreshUI();
-    if (window.triggerAutoSync) window.triggerAutoSync();
+
+    // Auto-sync if connected
+    const hasToken = localStorage.getItem('gdrive_token_v3');
+    if (hasToken) handleSync();
 }
 
 

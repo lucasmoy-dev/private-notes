@@ -3,8 +3,9 @@ import { state, loadLocalEncrypted } from '../state.js';
 import { showToast, safeCreateIcons } from '../ui-utils.js';
 
 export function getAuthShieldTemplate() {
+    const isAuthed = !!(sessionStorage.getItem('cn_pass_plain_v3') || localStorage.getItem('cn_pass_plain_v3'));
     return `
-    <div id="auth-shield" class="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm transition-opacity duration-300">
+    <div id="auth-shield" class="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm transition-opacity duration-300 ${isAuthed ? 'opacity-0 pointer-events-none' : ''}" style="${isAuthed ? 'display: none' : ''}">
         <div class="w-full max-w-sm p-8 space-y-6 bg-card border rounded-lg shadow-lg">
             <div class="text-center space-y-2">
                 <div class="mx-auto w-10 h-10 bg-primary rounded-md flex items-center justify-center text-primary-foreground">

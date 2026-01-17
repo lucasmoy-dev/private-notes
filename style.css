@@ -111,7 +111,11 @@
     }
 
     .dialog-content {
-        @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl duration-200 animate-in fade-in-0 zoom-in-95 sm:rounded-xl;
+        @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl duration-300 animate-in fade-in-0 zoom-in-95 sm:rounded-xl p-6;
+    }
+
+    .dialog-content.dialog-hide {
+        @apply animate-out fade-out-0 zoom-out-95 duration-200 !important;
     }
 
     .dialog-content.fullscreen-mode {
@@ -384,7 +388,11 @@ aside.collapsed .p-6 {
 }
 
 aside.collapsed .nav-link {
-    @apply justify-center px-0 !important;
+    @apply justify-center p-0 w-10 h-10 mx-auto rounded-xl !important;
+}
+
+aside.collapsed .nav-link i {
+    @apply w-5 h-5 !important;
 }
 
 /* Mobile Tools Menu */
