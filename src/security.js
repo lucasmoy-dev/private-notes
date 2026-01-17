@@ -17,6 +17,13 @@ export class SecurityService {
     }
 
     /**
+     * Derives a vault key from a password to avoid storing the plain text password.
+     */
+    static async deriveVaultKey(password) {
+        return await this.hash(password, 'vault_v3_internal_key');
+    }
+
+    /**
      * Helper for Compression (GZIP)
      */
     static async compress(text) {

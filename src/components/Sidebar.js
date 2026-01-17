@@ -63,6 +63,7 @@ export function renderCategories(onViewChange, categories = null) {
         const createNavBtn = (isMobile = false) => {
             const btn = document.createElement('button');
             btn.className = isMobile ? 'nav-link-mobile-drawer w-full group' : 'nav-link w-full group';
+            btn.setAttribute('data-view', cat.id);
             if (state.currentView === cat.id) btn.classList.add('active');
 
             btn.onclick = async () => {
@@ -75,11 +76,10 @@ export function renderCategories(onViewChange, categories = null) {
                         return;
                     }
                 }
-                document.querySelectorAll('.nav-link, .nav-link-mobile-drawer').forEach(l => l.classList.remove('active'));
-                btn.classList.add('active');
                 onViewChange(cat.id, cat.name);
                 if (isMobile) {
-                    document.getElementById('mobile-sidebar-overlay').classList.add('hidden');
+                    const overlay = document.getElementById('mobile-sidebar-overlay');
+                    if (overlay) overlay.classList.add('hidden');
                 }
             };
 

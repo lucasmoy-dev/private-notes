@@ -18,10 +18,10 @@ export const state = {
 };
 
 export async function saveLocal() {
-    const pass = sessionStorage.getItem('cn_pass_plain_v3');
-    if (pass) {
-        const encryptedNotes = await Security.encrypt(state.notes, pass);
-        const encryptedCats = await Security.encrypt(state.categories, pass);
+    const vaultKey = sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3');
+    if (vaultKey) {
+        const encryptedNotes = await Security.encrypt(state.notes, vaultKey);
+        const encryptedCats = await Security.encrypt(state.categories, vaultKey);
         localStorage.setItem('cn_notes_v3_enc', JSON.stringify(encryptedNotes));
         localStorage.setItem('cn_categories_v3_enc', JSON.stringify(encryptedCats));
 

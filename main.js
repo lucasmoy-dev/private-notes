@@ -102,6 +102,14 @@ function onViewChange(viewId, title) {
     state.currentView = viewId;
     updateViewHeader(title);
     renderNotes(openEditor);
+
+    // Global UI update for navigation links
+    document.querySelectorAll('[data-view]').forEach(l => {
+        l.classList.toggle('active', l.dataset.view === viewId);
+    });
+
+    // Refresh sidebar to ensure category list is correct (though onViewChange handles most)
+    renderCategories(onViewChange);
 }
 
 function updateViewHeader(title = null) {
@@ -191,10 +199,6 @@ function setupGlobalEvents() {
             const currentCat = state.categories.find(c => c.id === viewId);
             const title = currentCat ? currentCat.name : (viewId === 'all' ? 'Todas las notas' : '');
 
-            // UI Update for active state
-            navLinks.forEach(l => l.classList.toggle('active', l.dataset.view === viewId));
-
-            // Sync current state and header
             onViewChange(viewId, title);
             closeMobileSidebar();
         };
@@ -488,8 +492,8 @@ function updateDriveStatus(connected) {
 let isSyncing = false;
 async function handleSync() {
     if (isSyncing) return;
-    const pass = sessionStorage.getItem('cn_pass_plain_v3');
-    if (!pass) return;
+    const vaultKey = sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3');
+    if (!vaultKey) return;
 
     const syncIcons = document.querySelectorAll('#sync-icon, [data-lucide="refresh-cw"]');
     const syncButtons = document.querySelectorAll('#sync-btn, #mobile-sync-btn, #mobile-sync-btn-bottom');
@@ -503,7 +507,7 @@ async function handleSync() {
         const folderId = await drive.getOrCreateFolder(state.settings.drivePath);
 
         // 1. Download & Merge (Pull)
-        const cloudData = await drive.loadChunks(folderId, pass);
+        const cloudData = await drive.loadChunks(folderId, vaultKey);
         if (cloudData) {
             try {
                 if (cloudData && Array.isArray(cloudData.notes)) {
@@ -539,7 +543,7 @@ async function handleSync() {
         }
 
         // 2. Upload (Push)
-        await drive.saveChunks(state.notes, state.categories, pass, folderId);
+        await drive.saveChunks(state.notes, state.categories, vaultKey, folderId);
 
         showToast('✅ Sincronización completa');
     } catch (err) {
@@ -562,7 +566,8 @@ async function handleSync() {
 
 function triggerAutoSync() {
     const hasToken = localStorage.getItem('gdrive_token_v3');
-    if (state.gapiLoaded && hasToken && sessionStorage.getItem('cn_pass_plain_v3')) {
+    const vaultKey = sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3');
+    if (state.gapiLoaded && hasToken && vaultKey) {
         handleSync();
     }
 }

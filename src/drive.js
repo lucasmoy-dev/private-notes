@@ -49,7 +49,7 @@ export class DriveSync {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async saveChunks(notes, categories, pass, folderId) {
+    async saveChunks(notes, categories, vaultKey, folderId) {
         console.log(`[Drive] Saving ${notes.length} notes in groups of ${this.notesPerChunk}`);
 
         // 1. Get all files in folder once to check for existence/updates
@@ -67,7 +67,7 @@ export class DriveSync {
                 const url = `https://www.googleapis.com/drive/v3/files/${metaId}?alt=media`;
                 const fileResp = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
                 const encrypted = await fileResp.json();
-                oldMeta = await Security.decrypt(encrypted, pass);
+                oldMeta = await Security.decrypt(encrypted, vaultKey);
             } catch (e) { console.log("Failed to load previous meta."); }
         }
 
@@ -86,7 +86,7 @@ export class DriveSync {
             const fileName = `${this.groupPrefix}${i.toString().padStart(5, '0')}.bin`;
 
             if (needsUpload || !fileMap.has(fileName)) {
-                const encrypted = await Security.encrypt(noteGroups[i], pass);
+                const encrypted = await Security.encrypt(noteGroups[i], vaultKey);
                 await this.uploadFileWithId(fileName, JSON.stringify(encrypted), folderId, fileMap.get(fileName));
                 console.log(`[Drive] ${fileMap.has(fileName) ? 'Updated' : 'Created'} ${fileName}`);
             }
@@ -109,14 +109,14 @@ export class DriveSync {
 
         // 5. Update Meta
         const metaData = { categories, groupHashes };
-        const encryptedMeta = await Security.encrypt(metaData, pass);
+        const encryptedMeta = await Security.encrypt(metaData, vaultKey);
         await this.uploadFileWithId(this.metaFile, JSON.stringify(encryptedMeta), folderId, metaId);
 
         console.log("[Drive] Push complete.");
         return noteGroups.length;
     }
 
-    async loadChunks(folderId, pass) {
+    async loadChunks(folderId, vaultKey) {
         // 1. Get all files
         const q = `'${folderId}' in parents and trashed = false`;
         const resp = await gapi.client.drive.files.list({ q, fields: 'files(id, name)' });
@@ -131,7 +131,7 @@ export class DriveSync {
                 const metaUrl = `https://www.googleapis.com/drive/v3/files/${metaId}?alt=media`;
                 const metaResp = await fetch(metaUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
                 const metaEnc = await metaResp.json();
-                const meta = await Security.decrypt(metaEnc, pass);
+                const meta = await Security.decrypt(metaEnc, vaultKey);
 
                 console.log(`[Drive] Loading v4 data. Groups: ${Object.keys(meta.groupHashes).length}`);
                 const notes = [];
@@ -144,7 +144,7 @@ export class DriveSync {
                         const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
                         const fResp = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
                         const enc = await fResp.json();
-                        const gNotes = await Security.decrypt(enc, pass);
+                        const gNotes = await Security.decrypt(enc, vaultKey);
                         notes.push(...gNotes);
                     }
                 }
@@ -169,7 +169,7 @@ export class DriveSync {
             }
             try {
                 const cloudEncrypted = JSON.parse(fullData);
-                return await Security.decrypt(cloudEncrypted, pass);
+                return await Security.decrypt(cloudEncrypted, vaultKey);
             } catch (e) { console.error('[Drive] Legacy migration failed', e); }
         }
 

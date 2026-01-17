@@ -3,7 +3,7 @@ import { state, loadLocalEncrypted } from '../state.js';
 import { showToast, safeCreateIcons } from '../ui-utils.js';
 
 export function getAuthShieldTemplate() {
-    const isAuthed = !!(sessionStorage.getItem('cn_pass_plain_v3') || localStorage.getItem('cn_pass_plain_v3'));
+    const isAuthed = !!(sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3'));
     return `
     <div id="auth-shield" class="fixed inset-0 z-[100] flex items-center justify-center bg-background/95 backdrop-blur-sm transition-opacity duration-300 ${isAuthed ? 'opacity-0 pointer-events-none' : ''}" style="${isAuthed ? 'display: none' : ''}">
         <div class="w-full max-w-sm p-8 space-y-6 bg-card border rounded-lg shadow-lg">
@@ -48,20 +48,32 @@ export function getAuthShieldTemplate() {
 export async function checkAuthStatus(onSuccess) {
     const shield = document.getElementById('auth-shield');
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
-    const savedPass = sessionStorage.getItem('cn_pass_plain_v3');
+
+    // Check for both legacy and new key for migration/logout
+    const savedKey = sessionStorage.getItem('cn_vault_key_v3') || localStorage.getItem('cn_vault_key_v3');
 
     if (isSetup) {
         showSetupPage();
-    } else if (savedPass) {
-        const hash = await Security.hash(savedPass);
-        if (hash === localStorage.getItem('cn_master_hash_v3')) {
-            shield.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => shield.style.display = 'none', 300);
-            document.getElementById('app').classList.remove('opacity-0');
-            await loadLocalEncrypted(savedPass);
+    } else if (savedKey) {
+        // Validation: The vault key itself isn't what we check against master_hash
+        // We need the plain password to generate the master_hash... 
+        // WAIT: If we ONLY have the vaultKey (hashed), we can't reconstruct the plain password to verify master_hash.
+        // DECISION: We will use the vaultKey AS the session credential. 
+        // To verify it, we can store a small encrypted "sentinel" or just rely on the fact that if it decrypts the notes, it's correct.
+        // But for UI, we can just say "if savedKey exists, we are good" (it was saved after a successful login).
+
+        shield.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => shield.style.display = 'none', 300);
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.classList.remove('opacity-0');
+
+        try {
+            await loadLocalEncrypted(savedKey);
             onSuccess();
-        } else {
-            sessionStorage.removeItem('cn_pass_plain_v3');
+        } catch (e) {
+            console.error("Auto-auth failed, clearing keys.");
+            sessionStorage.removeItem('cn_vault_key_v3');
+            localStorage.removeItem('cn_vault_key_v3');
             showLoginPage();
         }
     } else {
@@ -144,19 +156,25 @@ export async function handleMasterAuth(onSuccess) {
         if (pass.length < 4) return showToast('La contraseña debe tener al menos 4 caracteres');
     }
 
-    const hash = await Security.hash(pass);
+    const authHash = await Security.hash(pass);
+    const vaultKey = await Security.deriveVaultKey(pass);
     const existingHash = localStorage.getItem('cn_master_hash_v3');
 
     const remember = document.getElementById('auth-remember').checked;
+
+    // MIGRATION: Clear legacy key
+    localStorage.removeItem('cn_pass_plain_v3');
+    sessionStorage.removeItem('cn_pass_plain_v3');
+
     if (!existingHash) {
-        localStorage.setItem('cn_master_hash_v3', hash);
-        sessionStorage.setItem('cn_pass_plain_v3', pass);
-        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
+        localStorage.setItem('cn_master_hash_v3', authHash);
+        sessionStorage.setItem('cn_vault_key_v3', vaultKey);
+        if (remember) localStorage.setItem('cn_vault_key_v3', vaultKey);
         showToast('✅ Bóveda creada con éxito');
-    } else if (existingHash === hash) {
-        sessionStorage.setItem('cn_pass_plain_v3', pass);
-        if (remember) localStorage.setItem('cn_pass_plain_v3', pass);
-        else localStorage.removeItem('cn_pass_plain_v3');
+    } else if (existingHash === authHash) {
+        sessionStorage.setItem('cn_vault_key_v3', vaultKey);
+        if (remember) localStorage.setItem('cn_vault_key_v3', vaultKey);
+        else localStorage.removeItem('cn_vault_key_v3');
         showToast('Bóveda abierta');
     } else {
         return showToast('❌ Contraseña incorrecta');
@@ -166,6 +184,6 @@ export async function handleMasterAuth(onSuccess) {
     shield.classList.add('opacity-0', 'pointer-events-none');
     setTimeout(() => shield.style.display = 'none', 300);
     document.getElementById('app').classList.remove('opacity-0');
-    await loadLocalEncrypted(pass);
+    await loadLocalEncrypted(vaultKey);
     onSuccess();
 }
