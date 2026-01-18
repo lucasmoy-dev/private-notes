@@ -5,7 +5,7 @@ export function getSettingsTemplate() {
     return `
     <div id="settings-modal" class="fixed inset-0 z-[80] hidden">
         <div class="dialog-overlay"></div>
-        <div class="dialog-content w-full h-full md:w-auto md:max-w-4xl p-0 overflow-hidden flex flex-col md:flex-row rounded-none md:rounded-xl">
+        <div class="dialog-content w-full h-full md:w-full md:max-w-5xl md:h-[650px] p-0 overflow-hidden flex flex-col md:flex-row rounded-none md:rounded-3xl shadow-2xl">
             <!-- Sidebar Settings -->
             <div id="settings-sidebar" class="w-full md:w-64 bg-muted/50 border-b md:border-b-0 md:border-r p-4 flex flex-col gap-2 overflow-y-auto">
                 <div class="flex items-center justify-between mb-2 md:hidden">
@@ -46,44 +46,53 @@ export function getSettingsTemplate() {
                         <section class="space-y-4">
                             <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">${t('settings.lang')}</h3>
                             <div class="space-y-2">
-                                <div id="language-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="en">
-                                        <span class="text-lg">🇺🇸</span> <span class="text-xs font-medium">English</span>
+                            <div class="relative w-full max-w-sm">
+                                <button id="lang-picker-btn" class="w-full h-11 px-4 rounded-xl border bg-card flex items-center justify-between hover:bg-accent transition-all">
+                                    <div class="flex items-center gap-3">
+                                        <span id="current-lang-flag" class="text-xl">🇺🇸</span>
+                                        <span id="current-lang-name" class="text-sm font-medium">English</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-muted-foreground"></i>
+                                </button>
+                                <div id="lang-picker-dropdown" class="absolute top-full left-0 w-full mt-2 bg-popover border rounded-xl shadow-2xl hidden z-50 py-1 max-h-[300px] overflow-y-auto">
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="en">
+                                        <span class="text-xl">🇺🇸</span> <span class="text-sm">English</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="es">
-                                        <span class="text-lg">🇪🇸</span> <span class="text-xs font-medium">Español</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="es">
+                                        <span class="text-xl">🇪🇸</span> <span class="text-sm">Español</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="fr">
-                                        <span class="text-lg">🇫🇷</span> <span class="text-xs font-medium">Français</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="fr">
+                                        <span class="text-xl">🇫🇷</span> <span class="text-sm">Français</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="de">
-                                        <span class="text-lg">🇩🇪</span> <span class="text-xs font-medium">Deutsch</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="de">
+                                        <span class="text-xl">🇩🇪</span> <span class="text-sm">Deutsch</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="it">
-                                        <span class="text-lg">🇮🇹</span> <span class="text-xs font-medium">Italiano</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="it">
+                                        <span class="text-xl">🇮🇹</span> <span class="text-sm">Italiano</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="pt">
-                                        <span class="text-lg">🇵🇹</span> <span class="text-xs font-medium">Português</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="pt">
+                                        <span class="text-xl">🇵🇹</span> <span class="text-sm">Português</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="ru">
-                                        <span class="text-lg">🇷🇺</span> <span class="text-xs font-medium">Русский</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ru">
+                                        <span class="text-xl">🇷🇺</span> <span class="text-sm">Русский</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="zh">
-                                        <span class="text-lg">🇨🇳</span> <span class="text-xs font-medium">中文</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="zh">
+                                        <span class="text-xl">🇨🇳</span> <span class="text-sm">中文</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="ja">
-                                        <span class="text-lg">🇯🇵</span> <span class="text-xs font-medium">日本語</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ja">
+                                        <span class="text-xl">🇯🇵</span> <span class="text-sm">日本語</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="ko">
-                                        <span class="text-lg">🇰🇷</span> <span class="text-xs font-medium">한국어</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ko">
+                                        <span class="text-xl">🇰🇷</span> <span class="text-sm">한국어</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="ar">
-                                        <span class="text-lg">🇸🇦</span> <span class="text-xs font-medium">العربية</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ar">
+                                        <span class="text-xl">🇸🇦</span> <span class="text-sm">العربية</span>
                                     </button>
-                                    <button class="lang-btn p-2 rounded-lg border bg-card flex items-center gap-2 hover:bg-accent transition-all" data-value="hi">
-                                        <span class="text-lg">🇮🇳</span> <span class="text-xs font-medium">हिन्दी</span>
+                                    <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="hi">
+                                        <span class="text-xl">🇮🇳</span> <span class="text-sm">हिन्दी</span>
                                     </button>
                                 </div>
+                            </div>
                             </div>
                         </section>
 
@@ -270,14 +279,41 @@ export function initSettings() {
     if (reloadBtn) reloadBtn.onclick = handleForceReload;
     if (reloadBtnSettings) reloadBtnSettings.onclick = handleForceReload;
 
-    // Language Switcher Logic (Grid)
-    const langBtns = document.querySelectorAll('.lang-btn');
-    langBtns.forEach(btn => {
-        if (btn.dataset.value === currentLang) {
-            btn.classList.add('ring-2', 'ring-primary', 'bg-primary/5');
-        }
-        btn.onclick = () => setLanguage(btn.dataset.value);
-    });
+    // Language Switcher (Custom Selectpicker)
+    const langPickerBtn = document.getElementById('lang-picker-btn');
+    const langPickerDropdown = document.getElementById('lang-picker-dropdown');
+    const langItems = document.querySelectorAll('.lang-item');
+
+    if (langPickerBtn) {
+        const updatePickerUI = (lang) => {
+            const item = Array.from(langItems).find(i => i.dataset.value === lang);
+            if (item) {
+                document.getElementById('current-lang-flag').innerText = item.querySelector('span:first-child').innerText;
+                document.getElementById('current-lang-name').innerText = item.querySelector('span:last-child').innerText;
+                langItems.forEach(i => i.classList.toggle('bg-primary/10', i.dataset.value === lang));
+            }
+        };
+
+        updatePickerUI(currentLang);
+
+        langPickerBtn.onclick = (e) => {
+            e.stopPropagation();
+            langPickerDropdown.classList.toggle('hidden');
+        };
+
+        langItems.forEach(item => {
+            item.onclick = () => {
+                const val = item.dataset.value;
+                setLanguage(val);
+                updatePickerUI(val);
+                langPickerDropdown.classList.add('hidden');
+            };
+        });
+
+        document.addEventListener('click', () => {
+            langPickerDropdown.classList.add('hidden');
+        });
+    }
 
     // Biometric Toggle Logic
     const toggleBioBtn = document.getElementById('toggle-biometric-btn');

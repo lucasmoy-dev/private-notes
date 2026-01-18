@@ -80,7 +80,7 @@ export function getEditorTemplate() {
                     </button>
                     <button id="open-colors-mobile" class="hidden editor-tool border border-input bg-background/50 shrink-0 w-8 h-8"><i data-lucide="palette" class="w-3.5 h-3.5"></i></button>
 
-                    <div class="relative flex-1 min-w-0" id="cat-select-wrapper">
+                    <div class="relative w-40" id="cat-select-wrapper">
                         <button id="cat-dropdown-trigger"
                             class="h-8 w-full px-2 rounded-md border border-input bg-background/50 text-[11px] flex items-center justify-between gap-1 hover:bg-accent transition-all">
                             <i data-lucide="tag" id="selected-cat-icon" class="w-3 h-3 text-muted-foreground/60"></i>

@@ -27,7 +27,8 @@ export function getCategoryManagerTemplate() {
                         <input type="text" id="new-cat-name" placeholder="${t('categories.add_new')}..." 
                                class="h-10 md:h-11 w-full px-4 bg-background border-none ring-1 ring-border focus:ring-2 focus:ring-violet-500 rounded-xl transition-all text-sm md:text-base" autocomplete="off">
                     </div>
-                    <button id="add-cat-btn" class="px-5 h-10 md:h-11 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20 active:scale-95 transition-all text-sm">
+                    <button id="add-cat-btn" class="btn-shad btn-shad-primary h-10 md:h-11 px-6 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                         <span>${t('common.confirm')}</span>
                     </button>
                 </div>
