@@ -23,6 +23,9 @@ export function getSettingsTemplate() {
                 <button class="settings-tab py-3 md:py-2.5 px-4 text-base md:text-sm flex items-center gap-3 md:gap-2" data-tab="security">
                     <i data-lucide="shield" class="w-5 h-5"></i> ${t('settings.security')}
                 </button>
+                <button class="settings-tab py-3 md:py-2.5 px-4 text-base md:text-sm flex items-center gap-3 md:gap-2" data-tab="backups">
+                    <i data-lucide="database" class="w-5 h-5"></i> ${t('backups.title')}
+                </button>
                 <button class="settings-tab text-destructive mt-auto py-3 md:py-2.5 px-4 text-base md:text-sm flex items-center gap-3 md:gap-2" data-tab="danger">
                     <i data-lucide="alert-triangle" class="w-5 h-5"></i> ${t('settings.danger')}
                 </button>
@@ -203,6 +206,36 @@ export function getSettingsTemplate() {
                         </section>
                     </div>
 
+                    <!-- Panel: Backups -->
+                    <div id="panel-backups" class="settings-panel hidden space-y-6">
+                        <section class="space-y-4">
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">${t('backups.title')}</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button id="export-db-btn" class="btn-shad btn-shad-outline h-14 flex items-center justify-center gap-3 rounded-2xl font-bold">
+                                    <i data-lucide="download" class="w-5 h-5"></i> ${t('backups.export_btn')}
+                                </button>
+                                
+                                <label class="btn-shad btn-shad-outline h-14 flex items-center justify-center gap-3 rounded-2xl font-bold cursor-pointer hover:bg-accent transition-all">
+                                    <i data-lucide="upload" class="w-5 h-5"></i> ${t('backups.import_btn')}
+                                    <input type="file" id="import-db-input" class="hidden" accept=".cnb">
+                                </label>
+                            </div>
+                        </section>
+
+                        <section class="space-y-4 pt-4 border-t">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-semibold uppercase tracking-wider text-muted-foreground">${t('backups.local_backups')}</h3>
+                                <button id="clear-backups-btn" class="text-[10px] text-destructive hover:underline uppercase font-bold tracking-tight">${t('backups.delete_all')}</button>
+                            </div>
+                            <p class="text-xs text-muted-foreground">${t('backups.auto_backup_desc')}</p>
+                            
+                            <div id="local-backups-list" class="space-y-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div class="text-center py-8 text-muted-foreground text-sm opacity-50">${t('backups.no_backups')}</div>
+                            </div>
+                        </section>
+                    </div>
+
                     <!-- Panel: Danger Zone -->
                     <div id="panel-danger" class="settings-panel hidden space-y-6">
                         <section class="p-4 rounded-lg border border-destructive/20 bg-destructive/5 space-y-4">
@@ -240,6 +273,7 @@ export function initSettings() {
             appearance: t('settings.general'),
             sync: t('settings.sync'),
             security: t('settings.security'),
+            backups: t('backups.title'),
             danger: t('settings.danger')
         };
         title.innerText = titles[target] || t('settings.title');
@@ -414,6 +448,101 @@ export function initSettings() {
             }
         };
     }
+
+    // Backup Tab Logic
+    const exportBtn = document.getElementById('export-db-btn');
+    const importInput = document.getElementById('import-db-input');
+    const clearBackupsBtn = document.getElementById('clear-backups-btn');
+    const backupsList = document.getElementById('local-backups-list');
+
+    if (exportBtn) {
+        exportBtn.onclick = async () => {
+            const { BackupService } = await import('../backup.js');
+            const { showToast } = await import('../ui-utils.js');
+            try {
+                await BackupService.exportToFile();
+                showToast(t('backups.export_success'));
+            } catch (e) {
+                showToast('❌ ' + e.message);
+            }
+        };
+    }
+
+    if (importInput) {
+        importInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const { BackupService } = await import('../backup.js');
+            const { showToast } = await import('../ui-utils.js');
+            try {
+                await BackupService.importFromFile(file);
+                showToast(t('backups.import_success'));
+                window.location.reload(); // Reload to apply data
+            } catch (err) {
+                showToast(t('backups.import_fail'));
+                console.error(err);
+            }
+        };
+    }
+
+    const renderLocalBackups = async () => {
+        if (!backupsList) return;
+        const { BackupService } = await import('../backup.js');
+        const backups = BackupService.getLocalBackups();
+
+        if (backups.length === 0) {
+            backupsList.innerHTML = `<div class="text-center py-8 text-muted-foreground text-sm opacity-50">${t('backups.no_backups')}</div>`;
+            return;
+        }
+
+        backupsList.innerHTML = backups.map(bak => {
+            const date = new Date(bak.timestamp).toLocaleString();
+            return `
+                <div class="flex items-center justify-between p-3 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold">${date}</p>
+                            <p class="text-[10px] text-muted-foreground">ID: ${bak.id}</p>
+                        </div>
+                    </div>
+                    <button class="restore-bak-btn h-8 px-4 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-[10px] font-bold transition-all" data-id="${bak.id}">
+                        ${t('backups.restore')}
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        document.querySelectorAll('.restore-bak-btn').forEach(btn => {
+            btn.onclick = async () => {
+                if (!confirm(t('backups.confirm_restore'))) return;
+                try {
+                    const { BackupService } = await import('../backup.js');
+                    await BackupService.restoreFromLocal(btn.dataset.id);
+                    window.location.reload();
+                } catch (err) {
+                    const { showToast } = await import('../ui-utils.js');
+                    showToast('❌ ' + err.message);
+                }
+            };
+        });
+        safeCreateIcons();
+    };
+
+    if (clearBackupsBtn) {
+        clearBackupsBtn.onclick = async () => {
+            if (!confirm('¿Eliminar todas las copias de seguridad locales?')) return;
+            const { BackupService } = await import('../backup.js');
+            BackupService.clearAllBackups();
+            renderLocalBackups();
+        };
+    }
+
+    // Initial render of backups when panel might be visible
+    document.querySelector('[data-tab="backups"]').addEventListener('click', renderLocalBackups);
 }
 
 export async function handleForceReload() {

@@ -132,6 +132,20 @@ export const translations = {
             success_disable: "🔓 Biometrics disabled",
             fail_enable: "❌ Failed to enable biometrics",
             incorrect_pass: "❌ Incorrect password"
+        },
+        backups: {
+            title: "Backups",
+            export_btn: "Export Database (.cnb)",
+            import_btn: "Import Database",
+            local_backups: "Local Daily Backups",
+            auto_backup_desc: "The app saves an encrypted copy locally every 24 hours (last 7 days).",
+            no_backups: "No local backups found yet.",
+            delete_all: "Delete all backups",
+            restore: "Restore",
+            confirm_restore: "Are you sure? This will replace all current notes with this backup.",
+            import_success: "✅ Database imported successfully",
+            import_fail: "❌ Import failed",
+            export_success: "✅ Exported successfully"
         }
     },
     es: {
@@ -267,6 +281,20 @@ export const translations = {
             success_disable: "🔓 Biometría desactivada",
             fail_enable: "❌ Error al activar biometría",
             incorrect_pass: "❌ Contraseña incorrecta"
+        },
+        backups: {
+            title: "Copias de Seguridad",
+            export_btn: "Exportar Base de Datos (.cnb)",
+            import_btn: "Importar Base de Datos",
+            local_backups: "Copias Diarias Locales",
+            auto_backup_desc: "La app guarda una copia encriptada localmente cada 24 horas (últimos 7 días).",
+            no_backups: "No hay copias locales todavía.",
+            delete_all: "Borrar todas las copias",
+            restore: "Restaurar",
+            confirm_restore: "¿Estás seguro? Esto reemplazará todas tus notas actuales por las de la copia.",
+            import_success: "✅ Base de datos importada con éxito",
+            import_fail: "❌ Error al importar",
+            export_success: "✅ Exportado con éxito"
         }
     },
     fr: {

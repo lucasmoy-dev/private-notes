@@ -18,6 +18,7 @@ import { getCommonUITemplate } from './src/components/CommonUI.js';
 import { renderCategories } from './src/components/Sidebar.js';
 import { renderNotes } from './src/components/NotesGrid.js';
 import { initI18n, t } from './src/i18n.js';
+import { BackupService } from './src/backup.js';
 
 // --- Initialization ---
 async function initApp() {
@@ -60,6 +61,7 @@ async function initApp() {
 
     // 6. Auth Check
     await checkAuthStatus(refreshUI);
+    BackupService.runAutoBackup();
 
     // 7. Final UI Polish
     initSearch();
