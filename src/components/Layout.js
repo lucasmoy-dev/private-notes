@@ -38,6 +38,9 @@ export function getLayoutTemplate() {
                 <button id="sidebar-manage-cats" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100">
                     <i data-lucide="tag" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.manage_tags')}</span>
                 </button>
+                <button id="sidebar-pwa-install-btn" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100 hidden">
+                    <i data-lucide="download" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.install_app')}</span>
+                </button>
                 <button id="settings-trigger" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100">
                     <i data-lucide="settings" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.settings')}</span>
                 </button>
@@ -61,6 +64,9 @@ export function getLayoutTemplate() {
                 <div class="flex items-center gap-2">
                     <button id="sync-btn" class="p-1.5 hover:bg-accent rounded-md text-muted-foreground transition-colors" title="${t('header.sync')}">
                         <i data-lucide="refresh-cw" class="w-4 h-4" id="sync-icon"></i>
+                    </button>
+                    <button id="pwa-install-btn" class="p-1.5 hover:bg-accent rounded-md text-muted-foreground transition-colors hidden" title="${t('header.install')}">
+                        <i data-lucide="download" class="w-4 h-4"></i>
                     </button>
                     <button id="add-note-btn" class="btn-shad btn-shad-primary h-8 px-4 text-xs font-bold">
                         <i data-lucide="plus" class="w-3.5 h-3.5 mr-2"></i> ${t('header.new_note')}
@@ -132,6 +138,9 @@ export function getLayoutTemplate() {
                 <div class="p-4 border-t space-y-1.5">
                     <button id="mobile-manage-cats" class="flex items-center gap-3 w-full p-2.5 rounded-md hover:bg-accent text-xs">
                         <i data-lucide="tag" class="w-3.5 h-3.5"></i> ${t('sidebar.manage_tags')}
+                    </button>
+                    <button id="mobile-pwa-install-btn" class="flex items-center gap-3 w-full p-2.5 rounded-md hover:bg-accent text-xs hidden">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> ${t('sidebar.install_app')}
                     </button>
                     <button id="mobile-settings-btn" class="flex items-center gap-3 w-full p-2.5 rounded-md hover:bg-accent text-xs">
                         <i data-lucide="settings" class="w-3.5 h-3.5"></i> ${t('sidebar.settings')}
