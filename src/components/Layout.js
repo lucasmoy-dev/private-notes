@@ -22,7 +22,10 @@ export function getLayoutTemplate() {
             <div class="flex-1 overflow-y-auto px-3 space-y-6">
                 <div class="space-y-0.5">
                     <button class="nav-link w-full" data-view="all">
-                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> <span class="sidebar-label text-foreground/90 font-bold">${t('sidebar.all_notes')}</span>
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                            <span class="sidebar-label text-foreground/90 font-bold">${t('sidebar.all_notes')}</span>
+                        </div>
                     </button>
                 </div>
 
@@ -33,13 +36,22 @@ export function getLayoutTemplate() {
 
             <div class="p-4 space-y-1.5 mt-auto">
                 <button id="sidebar-manage-cats" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100">
-                    <i data-lucide="tag" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.manage_tags')}</span>
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="tag" class="w-4 h-4"></i>
+                        <span class="sidebar-label">${t('sidebar.manage_tags')}</span>
+                    </div>
                 </button>
                 <button id="sidebar-pwa-install-btn" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100 hidden">
-                    <i data-lucide="download" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.install_app')}</span>
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span class="sidebar-label">${t('sidebar.install_app')}</span>
+                    </div>
                 </button>
                 <button id="settings-trigger" class="nav-link w-full text-[11px] opacity-70 hover:opacity-100">
-                    <i data-lucide="settings" class="w-3 h-3"></i> <span class="sidebar-label">${t('sidebar.settings')}</span>
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span class="sidebar-label">${t('sidebar.settings')}</span>
+                    </div>
                 </button>
                 <!-- Version -->
                 <div class="pt-3 border-t border-border/10 px-3">
