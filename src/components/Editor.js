@@ -141,8 +141,13 @@ export function initEditor(onSave) {
 
     const handleDelete = async () => {
         if (state.editingNoteId && confirm('¿Eliminar esta nota?')) {
-            state.notes = state.notes.filter(n => n.id !== state.editingNoteId);
-            await saveLocal();
+            const note = state.notes.find(n => n.id === state.editingNoteId);
+            if (note) {
+                note.deleted = true;
+                note.updatedAt = Date.now();
+                await saveLocal();
+                if (window.triggerAutoSync) window.triggerAutoSync();
+            }
             closeEditor();
             onSave();
         }
@@ -486,7 +491,9 @@ export async function saveActiveNote(shouldClose = true) {
         if (state.editingNoteId) {
             const existingIndex = state.notes.findIndex(n => n.id === state.editingNoteId);
             if (existingIndex >= 0) {
-                state.notes.splice(existingIndex, 1);
+                // Change to soft delete
+                state.notes[existingIndex].deleted = true;
+                state.notes[existingIndex].updatedAt = Date.now();
                 await saveLocal();
                 if (window.refreshUI) window.refreshUI();
                 if (window.triggerAutoSync) window.triggerAutoSync(); // Sync deletion

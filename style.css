@@ -757,8 +757,9 @@ textarea:focus {
 }
 
 /* New Checklist Implementation */
-#edit-content ul.checklist {
-    list-style-type: none;
+#edit-content ul.checklist,
+#edit-content ul.checklist ul {
+    list-style-type: none !important;
     padding-left: 1.5rem;
 }
 

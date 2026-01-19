@@ -15,9 +15,9 @@ export function renderNotes(onEdit, animate = true) {
     const filtered = state.currentView === 'all'
         ? state.notes.filter(n => {
             const cat = state.categories.find(c => c.id === n.categoryId);
-            return !cat || !cat.passwordHash;
+            return !n.deleted && (!cat || !cat.passwordHash);
         })
-        : state.notes.filter(n => n.categoryId === state.currentView);
+        : state.notes.filter(n => n.categoryId === state.currentView && !n.deleted);
 
     const pinnedNotes = filtered.filter(n => n.pinned);
     const otherNotes = filtered.filter(n => !n.pinned);
