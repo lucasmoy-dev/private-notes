@@ -103,7 +103,29 @@ function clearAuth() {
     localStorage.removeItem('cn_vault_key_v3');
 }
 
-// ... existing showSetupPage and showLoginPage ...
+function showSetupPage() {
+    const title = document.getElementById('auth-title');
+    const desc = document.getElementById('auth-desc');
+    const submit = document.getElementById('auth-submit');
+    const confirmWrapper = document.getElementById('confirm-password-wrapper');
+
+    if (title) title.innerText = t('auth.setup_title');
+    if (desc) desc.innerText = t('auth.setup_desc');
+    if (submit) submit.innerText = t('auth.create_vault');
+    if (confirmWrapper) confirmWrapper.classList.remove('hidden');
+}
+
+function showLoginPage() {
+    const title = document.getElementById('auth-title');
+    const desc = document.getElementById('auth-desc');
+    const submit = document.getElementById('auth-submit');
+    const confirmWrapper = document.getElementById('confirm-password-wrapper');
+
+    if (title) title.innerText = t('auth.title');
+    if (desc) desc.innerText = t('auth.desc');
+    if (submit) submit.innerText = t('auth.unlock');
+    if (confirmWrapper) confirmWrapper.classList.add('hidden');
+}
 
 export async function handleBiometricAuth(onSuccess) {
     const isEnabled = localStorage.getItem('cn_bio_enabled') === 'true';
@@ -199,7 +221,6 @@ async function finishLogin(vaultKey, onSuccess) {
 }
 
 export async function handleMasterAuth(onSuccess) {
-    // ... (rest of handleMasterAuth mostly same, but need to check bio toggle logic)
     const pass = document.getElementById('master-password').value;
     const confirmPass = document.getElementById('confirm-password').value;
     const isSetup = !localStorage.getItem('cn_master_hash_v3');
@@ -218,7 +239,6 @@ export async function handleMasterAuth(onSuccess) {
 
     const remember = document.getElementById('auth-remember').checked;
 
-    // ... cleanup ...
 
     if (!existingHash) {
         localStorage.setItem('cn_master_hash_v3', authHash);
@@ -232,7 +252,7 @@ export async function handleMasterAuth(onSuccess) {
         if (remember) {
             localStorage.setItem('cn_vault_key_v3', vaultKey);
             localStorage.setItem('cn_remember_me_v3', 'true');
-        } else if (!localStorage.getItem('cn_bio_enabled') === 'true') {
+        } else if (localStorage.getItem('cn_bio_enabled') !== 'true') {
             // If not remembering and not using bio, clean up local key
             localStorage.removeItem('cn_vault_key_v3');
             localStorage.removeItem('cn_remember_me_v3');
