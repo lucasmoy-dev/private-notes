@@ -582,16 +582,13 @@ async function handleSync() {
                         // Both exist: use the one with the most recent updatedAt
                         // This properly handles deleted notes since the deleted flag
                         // is part of the note object with the latest timestamp
-                        // Content-Aware Merge Strategy
-                        // If one is deleted and the other is active, but the CONTENT is identical,
-                        // it means the only change state is the deletion itself.
-                        // In this case, 'Deleted' is the more 'advanced' state, regardless of timestamp (fixes clock skew).
-                        // Content-Aware Merge Strategy (Expanded)
-                        const localContent = local.content || '';
-                        const cloudContent = cloud.content || '';
+                        // Content-Aware Merge Strategy (Expanded & Aggressive)
+                        const localContent = (local.content || '').trim().replace(/\r\n/g, '\n');
+                        const cloudContent = (cloud.content || '').trim().replace(/\r\n/g, '\n');
 
                         if (localContent === cloudContent) {
-                            // Content is identical. Conflict is metadata or deletion.
+                            // Content is identical (ignoring whitespace/line-endings).
+                            // Conflict is strictly Metadata (Category, Pin, Lock) or Deletion.
 
                             // 1. Deletion Priority
                             if (local.deleted !== !!cloud.deleted) {
@@ -599,11 +596,12 @@ async function handleSync() {
                             }
 
                             // 2. Metadata Priority (Category, Pin, Lock)
-                            // If content is same, we prioritize Local to avoid "Reversion" due to clock skew,
-                            // unless Cloud is SIGNIFICANTLY newer (e.g. > 5 minutes), indicating a legit change from elsewhere.
-                            // This fixes the "Category revert" bug.
+                            // If content is visually identical, we prioritize LOCAL changes.
+                            // We only yield to Cloud if it is objectively "From the future" (> 24 hours),
+                            // which would suggest a significant clock error or a completely different session.
+                            // This 24h window fixes all typical "Category Revert" issues caused by clock skew.
                             const diff = cloud.updatedAt - local.updatedAt;
-                            if (diff < 300000) { // 5 minutes tolerance for mostly single-user usage
+                            if (diff < 86400000) { // 24 hours tolerance
                                 return local;
                             }
                         }
