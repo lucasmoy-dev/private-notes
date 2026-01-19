@@ -136,9 +136,17 @@
     }
 
     .dialog-content {
-        @apply fixed left-[50%] top-[50%] z-50 grid w-[90%] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl duration-300 sm:rounded-2xl;
+        @apply fixed left-[50%] top-[50%] z-50 grid w-[90%] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-2xl sm:rounded-2xl;
         transform-origin: center center;
         animation: dialog-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .dialog-content.dialog-hide {
@@ -171,6 +179,7 @@
 
     .dialog-content.fullscreen {
         @apply w-full h-full max-w-none max-h-none rounded-none left-0 top-0 translate-x-0 translate-y-0 !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
 
@@ -452,7 +461,6 @@ aside.collapsed {
 }
 
 aside.collapsed .sidebar-label,
-aside.collapsed .sidebar-section-title,
 aside.collapsed h1,
 aside.collapsed #app-version {
     display: none !important;
@@ -463,15 +471,46 @@ aside.collapsed .p-6 {
 }
 
 aside.collapsed .nav-link {
-    @apply justify-center p-0 w-10 h-10 mx-auto rounded-xl !important;
+    @apply justify-center p-0 w-12 h-12 mx-auto rounded-xl flex items-center !important;
 }
 
 aside.collapsed .nav-link i {
-    @apply w-5 h-5 flex shrink-0 justify-center items-center !important;
+    @apply w-5 h-5 block shrink-0 !important;
+    margin: 0 auto !important;
 }
 
-aside.collapsed .nav-link>div {
+/* Hide everything else inside nav-link when collapsed */
+aside.collapsed .nav-link *:not(i):not([data-lucide]) {
     display: none !important;
+}
+
+aside.collapsed .sidebar-section-title {
+    display: none !important;
+}
+
+/* Emoji / Flag Visibility Fix */
+.flag-icon {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Android Emoji", sans-serif !important;
+    font-variant-emoji: emoji !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure the container of the icon doesn't hide everything but the label */
+aside.collapsed .nav-link .sidebar-label,
+aside.collapsed .nav-link .sidebar-label-container span,
+aside.collapsed .nav-link .sidebar-label-container div:nth-child(2) {
+    display: none !important;
+}
+
+aside.collapsed .sidebar-label-container {
+    padding: 0 !important;
+    justify-content: center !important;
+}
+
+aside.collapsed .sidebar-label-container>div {
+    gap: 0 !important;
 }
 
 /* Mobile Tools Menu */

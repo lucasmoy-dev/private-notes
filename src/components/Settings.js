@@ -52,47 +52,47 @@ export function getSettingsTemplate() {
                             <div class="relative w-full max-w-sm">
                                 <button id="lang-picker-btn" class="w-full h-11 px-4 rounded-xl border bg-card flex items-center justify-between hover:bg-accent transition-all">
                                     <div class="flex items-center gap-3">
-                                        <span id="current-lang-flag" class="text-xl">🇺🇸</span>
+                                        <span id="current-lang-flag" class="text-xl flag-icon font-normal">🇺🇸</span>
                                         <span id="current-lang-name" class="text-sm font-medium">English</span>
                                     </div>
                                     <i data-lucide="chevron-down" class="w-4 h-4 text-muted-foreground"></i>
                                 </button>
                                 <div id="lang-picker-dropdown" class="absolute top-full left-0 w-full mt-2 bg-popover border rounded-xl shadow-2xl hidden z-50 py-1 max-h-[300px] overflow-y-auto">
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="en">
-                                        <span class="text-xl">🇺🇸</span> <span class="text-sm">English</span>
+                                        <span class="text-xl flag-icon font-normal">🇺🇸</span> <span class="text-sm">English</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="es">
-                                        <span class="text-xl">🇪🇸</span> <span class="text-sm">Español</span>
+                                        <span class="text-xl flag-icon font-normal">🇪🇸</span> <span class="text-sm">Español</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="fr">
-                                        <span class="text-xl">🇫🇷</span> <span class="text-sm">Français</span>
+                                        <span class="text-xl flag-icon font-normal">🇫🇷</span> <span class="text-sm">Français</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="de">
-                                        <span class="text-xl">🇩🇪</span> <span class="text-sm">Deutsch</span>
+                                        <span class="text-xl flag-icon font-normal">🇩🇪</span> <span class="text-sm">Deutsch</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="it">
-                                        <span class="text-xl">🇮🇹</span> <span class="text-sm">Italiano</span>
+                                        <span class="text-xl flag-icon font-normal">🇮🇹</span> <span class="text-sm">Italiano</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="pt">
-                                        <span class="text-xl">🇵🇹</span> <span class="text-sm">Português</span>
+                                        <span class="text-xl flag-icon font-normal">🇵🇹</span> <span class="text-sm">Português</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ru">
-                                        <span class="text-xl">🇷🇺</span> <span class="text-sm">Русский</span>
+                                        <span class="text-xl flag-icon font-normal">🇷🇺</span> <span class="text-sm">Русский</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="zh">
-                                        <span class="text-xl">🇨🇳</span> <span class="text-sm">中文</span>
+                                        <span class="text-xl flag-icon font-normal">🇨🇳</span> <span class="text-sm">中文</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ja">
-                                        <span class="text-xl">🇯🇵</span> <span class="text-sm">日本語</span>
+                                        <span class="text-xl flag-icon font-normal">🇯🇵</span> <span class="text-sm">日本語</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ko">
-                                        <span class="text-xl">🇰🇷</span> <span class="text-sm">한국어</span>
+                                        <span class="text-xl flag-icon font-normal">🇰🇷</span> <span class="text-sm">한국어</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="ar">
-                                        <span class="text-xl">🇸🇦</span> <span class="text-sm">العربية</span>
+                                        <span class="text-xl flag-icon font-normal">🇸🇦</span> <span class="text-sm">العربية</span>
                                     </button>
                                     <button class="lang-item w-full px-4 py-2.5 flex items-center gap-3 hover:bg-accent transition-all" data-value="hi">
-                                        <span class="text-xl">🇮🇳</span> <span class="text-sm">हिन्दी</span>
+                                        <span class="text-xl flag-icon font-normal">🇮🇳</span> <span class="text-sm">ヒンディー語</span>
                                     </button>
                                 </div>
                             </div>
