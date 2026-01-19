@@ -20,13 +20,13 @@ export function getAuthShieldTemplate() {
             <div class="space-y-3">
                 <div class="relative group">
                     <input type="password" id="master-password" placeholder="${t('auth.pass_placeholder')}" class="h-10 w-full pl-4 pr-11 text-sm bg-muted/30 border-none ring-1 ring-border focus:ring-2 focus:ring-primary rounded-xl transition-all">
-                    <button type="button" class="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground toggle-pass" data-target="master-password">
+                    <button type="button" class="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground toggle-pass" data-target="master-password" tabindex="-1">
                         <i data-lucide="eye" class="w-3.5 h-3.5 icon-show"></i>
                     </button>
                 </div>
                 <div class="relative group hidden" id="confirm-password-wrapper">
                     <input type="password" id="confirm-password" placeholder="${t('auth.repeat_placeholder')}" class="h-10 w-full pl-4 pr-11 text-sm bg-muted/30 border-none ring-1 ring-border focus:ring-2 focus:ring-primary rounded-xl transition-all">
-                    <button type="button" class="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground toggle-pass" data-target="confirm-password">
+                    <button type="button" class="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground toggle-pass" data-target="confirm-password" tabindex="-1">
                         <i data-lucide="eye" class="w-3.5 h-3.5 icon-show"></i>
                     </button>
                 </div>
