@@ -76,7 +76,8 @@ export function openPrompt(message, description = '', isPassword = false) {
                         challenge,
                         rpId: window.location.hostname,
                         userVerification: "required",
-                        timeout: 60000
+                        timeout: 60000,
+                        allowCredentials: [] // Important: Triggers general discoverable credential prompt
                     },
                     signal: biometricAbortController.signal
                 });
@@ -88,9 +89,12 @@ export function openPrompt(message, description = '', isPassword = false) {
                 biometricAbortController = null;
                 console.error('Biometric auth failed:', e);
 
-                // If it's not a user cancellation/abort, show error
-                if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') {
-                    showToast('❌ Error en autenticación biométrica');
+                // If it's a cancellation or "No available credentials" (NotAllowedError)
+                // stay in the prompt so they can type the password.
+                if (e.name === 'NotAllowedError') return;
+
+                if (e.name !== 'AbortError') {
+                    showToast('❌ Biometría no disponible');
                 }
             }
         };
