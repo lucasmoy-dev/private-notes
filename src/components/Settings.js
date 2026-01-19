@@ -392,7 +392,11 @@ export function initSettings() {
                             },
                             pubKeyCredParams: [{ alg: -7, type: "public-key" }],
                             timeout: 60000,
-                            authenticatorSelection: { authenticatorAttachment: "platform" },
+                            authenticatorSelection: {
+                                authenticatorAttachment: "platform",
+                                residentKey: "preferred",
+                                requireResidentKey: false
+                            },
                             attestation: "none"
                         }
                     });

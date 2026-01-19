@@ -77,24 +77,47 @@ export function openPrompt(message, description = '', isPassword = false) {
                         rpId: window.location.hostname,
                         userVerification: "required",
                         timeout: 60000,
-                        allowCredentials: [] // Important: Triggers general discoverable credential prompt
+                        allowCredentials: []
                     },
                     signal: biometricAbortController.signal
                 });
 
                 biometricAbortController = null;
-                cleanup(); // Call cleanup on success
+                cleanup();
                 resolve({ biometric: true });
             } catch (e) {
-                biometricAbortController = null;
-                console.error('Biometric auth failed:', e);
+                // If get fails or no discoverable credentials, try 'create' as a verification fallback
+                // This is often needed on older Android/iOS versions for non-resident credentials.
+                try {
+                    console.log('[Bio] Get failed, trying create fallback...', e.name);
+                    if (e.name === 'AbortError') return;
 
-                // If it's a cancellation or "No available credentials" (NotAllowedError)
-                // stay in the prompt so they can type the password.
-                if (e.name === 'NotAllowedError') return;
+                    await navigator.credentials.create({
+                        publicKey: {
+                            challenge,
+                            rp: { name: "Private Notes", id: window.location.hostname },
+                            user: {
+                                id: new Uint8Array(16),
+                                name: "user",
+                                displayName: "User"
+                            },
+                            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                            timeout: 60000,
+                            authenticatorSelection: { authenticatorAttachment: "platform" },
+                            attestation: "none"
+                        },
+                        signal: biometricAbortController.signal
+                    });
 
-                if (e.name !== 'AbortError') {
-                    showToast('❌ Biometría no disponible');
+                    biometricAbortController = null;
+                    cleanup();
+                    resolve({ biometric: true });
+                } catch (e2) {
+                    biometricAbortController = null;
+                    console.error('Biometric fallback failed:', e2);
+                    if (e2.name !== 'NotAllowedError' && e2.name !== 'AbortError') {
+                        showToast('❌ Biometría no disponible');
+                    }
                 }
             }
         };
