@@ -749,9 +749,8 @@ function setTheme(t) {
 function migrateLegacyStorage() {
     const mapping = {
         'cn_master_hash_v3': KEYS.MASTER_HASH,
-        'cn_notes_v3_enc': KEYS.NOTES,
-        'cn_categories_v3_enc': KEYS.CATEGORIES,
-        'cn_vault_v3_enc': KEYS.VAULT,
+        'cn_notes_v3_enc': KEYS.NOTES_ENC,
+        'cn_categories_v3_enc': KEYS.CATEGORIES_ENC,
         'cn_vault_key_v3': KEYS.VAULT_KEY,
         'cn_settings_v3': KEYS.SETTINGS,
         'gdrive_token_v3': KEYS.DRIVE_TOKEN,
@@ -763,9 +762,32 @@ function migrateLegacyStorage() {
 
     let migrated = false;
 
-    // Local Storage
+    // Recovery: Check for encrypted data in plain keys (Bad migration fix)
+    try {
+        const plainNotes = localStorage.getItem(KEYS.NOTES);
+        if (plainNotes && plainNotes.includes('"payload":')) {
+            console.log('[Migration] Recovering encrypted notes from plain key...');
+            localStorage.setItem(KEYS.NOTES_ENC, plainNotes);
+            localStorage.removeItem(KEYS.NOTES);
+            migrated = true;
+        }
+
+        const plainCats = localStorage.getItem(KEYS.CATEGORIES);
+        if (plainCats && plainCats.includes('"payload":')) {
+            console.log('[Migration] Recovering encrypted categories from plain key...');
+            localStorage.setItem(KEYS.CATEGORIES_ENC, plainCats);
+            localStorage.removeItem(KEYS.CATEGORIES);
+            migrated = true;
+        }
+    } catch (e) {
+        console.error('[Migration] Recovery check failed', e);
+    }
+
+    // Local Storage - Non-destructive copy
     for (const [oldKey, newKey] of Object.entries(mapping)) {
+        if (!newKey) continue;
         const value = localStorage.getItem(oldKey);
+        // Only migrate if new key is empty to avoid overwriting newer data
         if (value && !localStorage.getItem(newKey)) {
             localStorage.setItem(newKey, value);
             migrated = true;
