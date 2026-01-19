@@ -565,7 +565,7 @@ async function handleSync() {
             try {
                 if (cloudData && Array.isArray(cloudData.notes)) {
                     // ... (rest of the logic)
-                    // Simple Merge: Last write wins
+                    // Simple Merge: Last write wins (respecting deleted flag)
                     const cloudNotesMap = new Map(cloudData.notes.map(n => [n.id, n]));
                     const localNotesMap = new Map(state.notes.map(n => [n.id, n]));
 
@@ -574,10 +574,16 @@ async function handleSync() {
                     const mergedNotes = Array.from(allIds).map(id => {
                         const local = localNotesMap.get(id);
                         const cloud = cloudNotesMap.get(id);
+
+                        // If only one exists, use it
                         if (!local) return cloud;
                         if (!cloud) return local;
+
+                        // Both exist: use the one with the most recent updatedAt
+                        // This properly handles deleted notes since the deleted flag
+                        // is part of the note object with the latest timestamp
                         return (cloud.updatedAt > local.updatedAt) ? cloud : local;
-                    });
+                    }).filter(note => !note.deleted); // Filter out deleted notes from final state
 
                     state.notes = mergedNotes.sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -596,8 +602,9 @@ async function handleSync() {
             }
         }
 
-        // 2. Upload (Push)
-        await drive.saveChunks(state.notes, state.categories, vaultKey, folderId);
+        // 2. Upload (Push) - Filter out deleted notes before uploading
+        const activeNotes = state.notes.filter(n => !n.deleted);
+        await drive.saveChunks(activeNotes, state.categories, vaultKey, folderId);
 
         showToast('✅ Sincronización completa');
     } catch (err) {

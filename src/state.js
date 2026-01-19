@@ -21,6 +21,15 @@ export const state = {
 export async function saveLocal() {
     const vaultKey = sessionStorage.getItem(KEYS.VAULT_KEY) || localStorage.getItem(KEYS.VAULT_KEY);
     if (vaultKey) {
+        // Clean up deleted notes older than 30 days
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        state.notes = state.notes.filter(note => {
+            // Keep all non-deleted notes
+            if (!note.deleted) return true;
+            // Keep recently deleted notes (for sync purposes)
+            return note.updatedAt > thirtyDaysAgo;
+        });
+
         const encryptedNotes = await Security.encrypt(state.notes, vaultKey);
         const encryptedCats = await Security.encrypt(state.categories, vaultKey);
         localStorage.setItem(KEYS.NOTES_ENC, JSON.stringify(encryptedNotes));
