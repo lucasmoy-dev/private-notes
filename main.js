@@ -582,15 +582,34 @@ async function handleSync() {
                         // Both exist: use the one with the most recent updatedAt
                         // This properly handles deleted notes since the deleted flag
                         // is part of the note object with the latest timestamp
-                        // Robust Merge Logic handling Clock Skew
-                        // If Cloud is strictly newer, it usually wins unless...
-                        if (cloud.updatedAt > local.updatedAt) {
-                            // Exception: If local is deleted and cloud is 'active' but the difference is small (< 60s),
-                            // it's likely a clock skew issue where the user just deleted it but their clock is slow.
+                        // Content-Aware Merge Strategy
+                        // If one is deleted and the other is active, but the CONTENT is identical,
+                        // it means the only change state is the deletion itself.
+                        // In this case, 'Deleted' is the more 'advanced' state, regardless of timestamp (fixes clock skew).
+                        // Content-Aware Merge Strategy (Expanded)
+                        const localContent = local.content || '';
+                        const cloudContent = cloud.content || '';
+
+                        if (localContent === cloudContent) {
+                            // Content is identical. Conflict is metadata or deletion.
+
+                            // 1. Deletion Priority
+                            if (local.deleted !== !!cloud.deleted) {
+                                return local.deleted ? local : cloud;
+                            }
+
+                            // 2. Metadata Priority (Category, Pin, Lock)
+                            // If content is same, we prioritize Local to avoid "Reversion" due to clock skew,
+                            // unless Cloud is SIGNIFICANTLY newer (e.g. > 5 minutes), indicating a legit change from elsewhere.
+                            // This fixes the "Category revert" bug.
                             const diff = cloud.updatedAt - local.updatedAt;
-                            if (local.deleted && !cloud.deleted && diff < 60000) {
+                            if (diff < 300000) { // 5 minutes tolerance for mostly single-user usage
                                 return local;
                             }
+                        }
+
+                        // Standard Timestamp Logic for other cases (edits vs edits, or edit vs delete)
+                        if (cloud.updatedAt > local.updatedAt) {
                             return cloud;
                         }
                         return local;
@@ -598,10 +617,14 @@ async function handleSync() {
 
                     state.notes = mergedNotes.sort((a, b) => b.updatedAt - a.updatedAt);
 
-                    // Merge categories similarly
+                    // Merge categories prioritizing LOCAL ORDER
+                    // If the user reordered locally, we want to keep that order.
+                    // New cloud categories will be appended.
                     const cloudCatsMap = new Map(cloudData.categories.map(c => [c.id, c]));
                     const localCatsMap = new Map(state.categories.map(c => [c.id, c]));
-                    const allCatIds = new Set([...cloudCatsMap.keys(), ...localCatsMap.keys()]);
+
+                    // Use LOCAL keys first to define order
+                    const allCatIds = new Set([...localCatsMap.keys(), ...cloudCatsMap.keys()]);
                     state.categories = Array.from(allCatIds).map(id => localCatsMap.get(id) || cloudCatsMap.get(id));
 
                     await saveLocal();

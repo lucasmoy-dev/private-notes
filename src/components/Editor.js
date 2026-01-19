@@ -379,6 +379,17 @@ export function openEditor(note = null) {
     contentEl.innerHTML = (note?.content === undefined || note?.content === 'undefined') ? '' : (note?.content || '');
 
     let defaultCat = '';
+
+    // Safety: Ensure select options exist (Fix for race condition on load)
+    if (catSelect && catSelect.options.length <= 1 && state.categories.length > 0) {
+        state.categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = c.name;
+            catSelect.appendChild(opt);
+        });
+    }
+
     if (!note && state.currentView !== 'all') defaultCat = state.currentView;
     catSelect.value = note ? (note.categoryId || '') : defaultCat;
 
