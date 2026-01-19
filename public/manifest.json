@@ -4,7 +4,7 @@
   "description": "Simple notes with Google Drive sync",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#b7e4ff",
+  "background_color": "#333333",
   "theme_color": "#6366f1",
   "icons": [
     {
