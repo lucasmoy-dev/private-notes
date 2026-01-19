@@ -15,6 +15,10 @@ export function renderCategories(onViewChange, categories = null) {
 
     if (sidebar) sidebar.innerHTML = '';
     if (mobileSidebar) mobileSidebar.innerHTML = '';
+
+    // Preserve election if editing
+    const currentSelectValue = select ? select.value : '';
+
     if (select) select.innerHTML = `<option value="">${t('categories.no_category')}</option>`;
     if (dropdown) dropdown.innerHTML = `<div class="px-3 py-1.5 text-xs hover:bg-accent cursor-pointer border-b" data-id="">${t('categories.no_category')}</div>`;
 
@@ -111,5 +115,12 @@ export function renderCategories(onViewChange, categories = null) {
 
         addOption(cat.id, cat.name, cat.icon);
     });
+
+    if (select && currentSelectValue) {
+        select.value = currentSelectValue;
+        // Verify if the value was actually set (it might have been deleted)
+        if (select.value !== currentSelectValue) select.value = '';
+    }
+
     safeCreateIcons();
 }
