@@ -51,8 +51,8 @@ export function renderNotes(onEdit, animate = true) {
                 </div>
                 ${(cat && state.currentView === 'all') ? `
                 <div class="mt-auto">
-                    <span class="flex items-center gap-1.5 text-[9px] px-2 py-1 rounded-full bg-primary border border-primary/20 font-bold text-primary-foreground uppercase tracking-widest">
-                        <i data-lucide="${cat.icon || 'tag'}" class="w-3 h-3 text-primary-foreground"></i>
+                    <span class="flex items-center gap-1.5 text-[9px] px-2 py-1 rounded-full bg-primary/10 border border-primary/20 font-bold text-primary uppercase tracking-widest">
+                        <i data-lucide="${cat.icon || 'tag'}" class="w-3 h-3 text-primary"></i>
                         ${cat.name}
                     </span>
                 </div>` : ''}

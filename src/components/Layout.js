@@ -54,11 +54,12 @@ export function getLayoutTemplate() {
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-background relative overflow-hidden h-full">
             <!-- Desktop Header -->
-            <header class="hidden md:flex h-14 items-center justify-between px-6 border-b shrink-0">
+            <header class="hidden md:flex h-14 items-center justify-between px-6 border-b shrink-0 bg-background/50 backdrop-blur-md sticky top-0 z-30">
                 <div class="flex items-center gap-4 flex-1">
                     <div class="relative w-full max-w-xs">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground"></i>
-                        <input type="text" id="search-input" placeholder="${t('header.search_placeholder')}" class="pl-10 h-8 w-full text-sm" autocomplete="off">
+                        <input type="text" id="search-notes" placeholder="${t('header.search_placeholder')}" 
+                               class="h-9 w-full rounded-full bg-muted/50 border-none pl-4 pr-10 text-xs focus:ring-1 focus:ring-violet-500/50 transition-all">
+                        <i data-lucide="search" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/60"></i>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
