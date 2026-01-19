@@ -610,6 +610,13 @@ async function handleSync() {
 
                         // Standard Timestamp Logic for other cases (edits vs edits, or edit vs delete)
                         if (cloud.updatedAt > local.updatedAt) {
+                            // Anti-Resurrection Shield:
+                            // If local is deleted, but cloud is active and slightly newer (clock skew),
+                            // prioritize deletion.
+                            const diff = cloud.updatedAt - local.updatedAt;
+                            if (local.deleted && !cloud.deleted && diff < 120000) { // 2 mins tolerance
+                                return local;
+                            }
                             return cloud;
                         }
                         return local;

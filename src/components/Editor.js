@@ -549,6 +549,11 @@ export async function saveActiveNote(shouldClose = true) {
         }
     }
 
+    // Check if note was already deleted (prevent resurrection)
+    if (noteIndex >= 0 && state.notes[noteIndex].deleted) {
+        return;
+    }
+
     const noteData = {
         id: state.editingNoteId || Date.now().toString(),
         title: title,
@@ -557,6 +562,7 @@ export async function saveActiveNote(shouldClose = true) {
         pinned: isPinned,
         themeId: themeId || 'default',
         passwordHash: passwordHash,
+        deleted: (noteIndex >= 0 ? state.notes[noteIndex].deleted : false),
         updatedAt: Date.now()
     };
 
