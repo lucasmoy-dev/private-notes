@@ -1,3 +1,5 @@
+let biometricAbortController = null;
+
 export function showToast(msg, duration = 3000) {
     const toast = document.getElementById('toast');
     if (!toast) return;
@@ -62,6 +64,9 @@ export function openPrompt(message, description = '', isPassword = false) {
         }
 
         bioBtn.onclick = async () => {
+            if (biometricAbortController) biometricAbortController.abort();
+            biometricAbortController = new AbortController();
+
             try {
                 const challenge = new Uint8Array(32);
                 window.crypto.getRandomValues(challenge);
@@ -72,39 +77,20 @@ export function openPrompt(message, description = '', isPassword = false) {
                         rpId: window.location.hostname,
                         userVerification: "required",
                         timeout: 60000
-                    }
+                    },
+                    signal: biometricAbortController.signal
                 });
 
+                biometricAbortController = null;
                 cleanup(); // Call cleanup on success
                 resolve({ biometric: true });
             } catch (e) {
+                biometricAbortController = null;
                 console.error('Biometric auth failed:', e);
-                // Fallback: try to create credential (Proof of Presence via Creation)
-                try {
-                    const challenge2 = new Uint8Array(32);
-                    window.crypto.getRandomValues(challenge2);
 
-                    await navigator.credentials.create({
-                        publicKey: {
-                            challenge: challenge2,
-                            rp: { name: "Private Notes", id: window.location.hostname },
-                            user: {
-                                id: new Uint8Array(16),
-                                name: "user",
-                                displayName: "User"
-                            },
-                            pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                            timeout: 60000,
-                            authenticatorSelection: { authenticatorAttachment: "platform" },
-                            attestation: "none"
-                        }
-                    });
-
-                    cleanup(); // Call cleanup on success
-                    resolve({ biometric: true });
-                } catch (e2) {
-                    console.error('Biometric create failed:', e2);
-                    showToast('❌ Biometric authentication failed');
+                // If it's not a user cancellation/abort, show error
+                if (e.name !== 'NotAllowedError' && e.name !== 'AbortError') {
+                    showToast('❌ Error en autenticación biométrica');
                 }
             }
         };

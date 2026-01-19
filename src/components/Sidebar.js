@@ -67,6 +67,11 @@ export function renderCategories(onViewChange, categories = null) {
             if (state.currentView === cat.id) btn.classList.add('active');
 
             btn.onclick = async () => {
+                if (isMobile) {
+                    const overlay = document.getElementById('mobile-sidebar-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+
                 if (cat.passwordHash) {
                     const result = await openPrompt(t('common.restricted_access'), `${t('common.enter_cat_pass')} "${cat.name}":`, true);
                     if (!result) return;
@@ -84,10 +89,6 @@ export function renderCategories(onViewChange, categories = null) {
                     }
                 }
                 onViewChange(cat.id, cat.name);
-                if (isMobile) {
-                    const overlay = document.getElementById('mobile-sidebar-overlay');
-                    if (overlay) overlay.classList.add('hidden');
-                }
             };
 
             btn.innerHTML = `
