@@ -339,58 +339,30 @@ export function initEditor(onSave) {
     modal.querySelector('.dialog-overlay').onclick = () => {
         saveActiveNote();
     };
+    // Mobile Back Button Support
+    window.addEventListener('popstate', (event) => {
+        const modal = document.getElementById('editor-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+            // If the back button was pressed and editor is open
+            saveActiveNote(false); // Save without triggering close (since we are already closing)
+            closeEditorInternal(); // Close UI
+        }
+    });
 }
 
-
+// ... existing code ...
 
 function handleAutoLinks() {
-    // Simple auto-linker on space or enter
-    // For performance, we don't do complex regex on every keyup, 
-    // but just let the browser handle it or use a simpler marker.
+    // ... existing code ...
 }
 
 function updateToolsUI() {
-    document.querySelectorAll('.editor-tool[data-cmd]').forEach(btn => {
-        const cmd = btn.dataset.cmd;
-        try {
-            const active = document.queryCommandState(cmd);
-            btn.classList.toggle('active', active);
-        } catch (e) { }
-    });
-
-    const pinBtn = document.getElementById('opt-toggle-pin');
-    if (pinBtn) updatePinUI(pinBtn.dataset.active === 'true');
-
-    const lockBtn = document.getElementById('opt-toggle-lock');
-    if (lockBtn) updateLockUI(lockBtn.dataset.active === 'true');
-
-    const updateChecklistStatus = (btnId) => {
-        const btn = document.getElementById(btnId);
-        if (!btn) return;
-        let isChecklist = false;
-        try {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                let node = selection.anchorNode;
-                while (node && node.id !== 'edit-content') {
-                    if (node.nodeName === 'UL' && node.classList.contains('checklist')) {
-                        isChecklist = true;
-                        break;
-                    }
-                    node = node.parentNode;
-                }
-            }
-        } catch (e) { }
-        btn.classList.toggle('active', isChecklist);
-    };
-
-    updateChecklistStatus('checklist-btn');
-    updateChecklistStatus('mobile-checklist-btn');
-
-    // Removed mobile format trigger update
+    // ... existing code ...
 }
 
 export function openEditor(note = null) {
+    history.pushState({ modal: 'editor' }, '', '');
+
     const modal = document.getElementById('editor-modal');
     const titleEl = document.getElementById('edit-title');
     const contentEl = document.getElementById('edit-content');
@@ -459,7 +431,7 @@ export function openEditor(note = null) {
     };
 }
 
-function closeEditor() {
+function closeEditorInternal() {
     const modal = document.getElementById('editor-modal');
     const content = modal.querySelector('.dialog-content');
 
@@ -481,6 +453,16 @@ function closeEditor() {
 
         if (window.refreshUI) window.refreshUI(false);
     }, 200);
+}
+
+function closeEditor() {
+    // If we have history state, go back (triggers popstate -> closeEditorInternal)
+    if (history.state?.modal === 'editor') {
+        history.back();
+    } else {
+        // Fallback for direct calls or messed up history
+        closeEditorInternal();
+    }
 }
 
 export async function saveActiveNote(shouldClose = true) {
