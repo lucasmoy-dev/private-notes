@@ -502,7 +502,8 @@ aside.collapsed .nav-link i {
 aside.collapsed .nav-link .sidebar-label,
 aside.collapsed .nav-link span,
 aside.collapsed .nav-link .flex-1,
-aside.collapsed .nav-link .truncate {
+aside.collapsed .nav-link .truncate,
+aside.collapsed .nav-link>div>div:last-child {
     display: none !important;
 }
 
