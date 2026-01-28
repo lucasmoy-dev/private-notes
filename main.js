@@ -323,9 +323,10 @@ function setupGlobalEvents() {
         };
     }
 
-    window.triggerAutoSync = triggerAutoSync;
-
-    // Global Exposure
+    window.triggerAutoSync = () => {
+        clearTimeout(syncDebounce);
+        syncDebounce = setTimeout(handleSync, 2000); // Reduced from 5s to 2s
+    };
     window.handleLogout = handleLogout;
     window.openEditor = openEditor;
 }

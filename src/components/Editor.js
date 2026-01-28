@@ -155,6 +155,7 @@ export function initEditor(onSave) {
     document.getElementById('done-note').onclick = async () => {
         await saveActiveNote(false);
         onSave();
+        window.triggerAutoSync?.();
         closeEditor();
     };
 
@@ -253,12 +254,15 @@ export function initEditor(onSave) {
     };
 
     // Pin Toggle
-    document.getElementById('opt-toggle-pin').onclick = () => {
+    document.getElementById('opt-toggle-pin').onclick = async () => {
         const note = state.notes.find(n => n.id === state.editingNoteId);
         if (note) {
             note.pinned = !note.pinned;
             note.updatedAt = Date.now();
             EditorUI.updatePinUI(note.pinned);
+            await saveLocal();
+            onSave(); // Refresh background grid
+            window.triggerAutoSync?.();
         }
     };
 
@@ -272,6 +276,9 @@ export function initEditor(onSave) {
                 note.passwordHash = null;
                 note.updatedAt = Date.now();
                 EditorUI.updateLockUI(false);
+                await saveLocal();
+                onSave(); // Refresh background grid
+                window.triggerAutoSync?.();
                 showToast('🔓 Restricción eliminada');
             }
         } else {
@@ -280,6 +287,9 @@ export function initEditor(onSave) {
                 note.passwordHash = await Security.hash(pass);
                 note.updatedAt = Date.now();
                 EditorUI.updateLockUI(true);
+                await saveLocal();
+                onSave(); // Refresh background grid
+                window.triggerAutoSync?.();
                 showToast('🔒 Nota restringida');
             }
         }
@@ -352,6 +362,8 @@ export async function openEditor(note = null) {
             liveNote.categoryId = catId;
             liveNote.updatedAt = Date.now();
             await saveLocal();
+            EditorUI.updateCategoryUI();
+            onSave(); // Refresh background grid
             window.triggerAutoSync?.();
         }
     });
@@ -429,6 +441,7 @@ export async function saveActiveNote(close = true) {
     }
 
     await saveLocal();
+    window.triggerAutoSync?.();
     if (close) closeEditor();
 }
 
