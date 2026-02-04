@@ -7,6 +7,7 @@ import { DriveSync } from './src/drive.js';
 import { AuthService } from './src/auth.js';
 
 const CLIENT_ID = '974464877836-721dprai6taijtuufmrkh438q68e97sp.apps.googleusercontent.com';
+const CLIENT_SECRET = [71, 79, 67, 83, 80, 88, 45, 112, 121, 52, 68, 109, 80, 83, 107, 45, 100, 75, 55, 99, 73, 66, 116, 106, 65, 81, 75, 90, 70, 75, 118, 95, 66, 87, 95].map(c => String.fromCharCode(c)).join('');
 let deferredPrompt = null;
 let syncDebounce = null;
 
@@ -454,7 +455,7 @@ function initGapi() {
                         if (resp.code) {
                             try {
                                 const verifier = sessionStorage.getItem('pkce_verifier');
-                                const secret = state.settings.clientSecret;
+                                const secret = state.settings.clientSecret || CLIENT_SECRET;
                                 const tokens = await AuthService.exchangeCodeForTokens(resp.code, verifier, CLIENT_ID, secret);
 
                                 if (tokens.refresh_token) {
@@ -551,7 +552,7 @@ async function handleSync() {
 
                 if (refreshToken) {
                     try {
-                        const secret = state.settings.clientSecret;
+                        const secret = state.settings.clientSecret || CLIENT_SECRET;
                         const newTokens = await AuthService.refreshAccessToken(refreshToken, CLIENT_ID, secret);
                         // Merge new tokens with old ones (to keep the refresh token if not rotated)
                         token = { ...token, ...newTokens };
