@@ -6,11 +6,32 @@ const BASE_DIR = 'PrivateNotes';
 export class CapacitorFileStorage {
     static async connectFolder() {
         try {
-            await Filesystem.mkdir({
-                path: BASE_DIR,
-                directory: Directory.Documents,
-                recursive: true
-            });
+            // Check and request permissions
+            const status = await Filesystem.requestPermissions();
+            if (status.publicStorage !== 'granted') {
+                throw new Error('Permiso denegado. Habilita el acceso al almacenamiento.');
+            }
+
+            // Ensure directory exists
+            try {
+                await Filesystem.mkdir({
+                    path: BASE_DIR,
+                    directory: Directory.Documents,
+                    recursive: true
+                });
+            } catch (e) {
+                // If mkdir fails, verify if it's because it already exists and we have access
+                try {
+                    await Filesystem.stat({
+                        path: BASE_DIR,
+                        directory: Directory.Documents
+                    });
+                } catch (statError) {
+                    console.error('[Capacitor] mkdir failed and stat failed', e, statError);
+                    throw new Error('No se pudo crear ni acceder a la carpeta PrivateNotes.');
+                }
+            }
+            
             return { capacitor: true };
         } catch (e) {
             console.error('[Capacitor] Connection failed', e);

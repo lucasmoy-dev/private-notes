@@ -396,7 +396,7 @@ export function initSettings() {
                 }
             } catch (e) {
                 console.error(e);
-                showToast('❌ Error al conectar');
+                showToast('❌ ' + (e.message || 'Error al conectar'));
             }
         };
     }
