@@ -31,7 +31,7 @@ export class CapacitorFileStorage {
                     throw new Error('No se pudo crear ni acceder a la carpeta PrivateNotes.');
                 }
             }
-            
+
             return { capacitor: true };
         } catch (e) {
             console.error('[Capacitor] Connection failed', e);
@@ -105,6 +105,17 @@ export class CapacitorFileStorage {
 
     static async pullData(vaultKey) {
         try {
+            // Check if directory exists and metadata exists
+            try {
+                const stat = await Filesystem.stat({
+                    path: `${BASE_DIR}/metadata.bin`,
+                    directory: Directory.Documents
+                });
+            } catch (e) {
+                console.log('[Capacitor] metadata.bin not found, folder might be empty or new.');
+                return null;
+            }
+
             const metaContent = await Filesystem.readFile({
                 path: `${BASE_DIR}/metadata.bin`,
                 directory: Directory.Documents,
@@ -134,6 +145,10 @@ export class CapacitorFileStorage {
             return { notes, categories: meta.categories || [] };
         } catch (e) {
             console.error('[Capacitor] Pull failed', e);
+            // Re-throw if it's a security/decryption error so the UI can show it
+            if (e.message.includes('Contraseña') || e.message.includes('decrypt')) {
+                throw e;
+            }
             return null;
         }
     }

@@ -145,7 +145,7 @@ export function getSettingsTemplate() {
                             
                             <p class="text-xs text-muted-foreground">
                                 ${isCapacitor()
-            ? 'Las notas se guardarán en la carpeta "PrivateNotes" de tus documentos. Puedes sincronizar esta carpeta con otros dispositivos usando apps como Syncthing o FolderSync.'
+            ? 'Las notas se guardarán en <b>Documents/PrivateNotes</b>. Debido a restricciones de Android, no se puede elegir una carpeta externa, pero puedes sincronizar esta con Syncthing.'
             : 'Selecciona una carpeta local para sincronizar tus notas. Ideal para usar con servicios de nube como Dropbox o OneDrive.'}
                             </p>
 
@@ -331,7 +331,7 @@ export function initSettings() {
                 statusEl.classList.replace('bg-muted', 'bg-emerald-500/20');
                 statusEl.classList.replace('text-muted-foreground', 'text-emerald-500');
                 if (connectBtn) {
-                    connectBtn.innerHTML = `<i data-lucide="folder-check" class="w-5 h-5"></i> Cambiar Carpeta`;
+                    connectBtn.innerHTML = `<i data-lucide="folder-check" class="w-5 h-5"></i> ${isCapacitor() ? 'Sincronizar ahora' : 'Cambiar Carpeta'}`;
                     connectBtn.classList.remove('btn-shad-primary');
                     connectBtn.classList.add('btn-shad-outline');
                 }
@@ -378,7 +378,7 @@ export function initSettings() {
                 } else {
                     // Connect new folder
                     await FileStorage.connectFolder();
-                    showToast('✅ Carpeta conectada');
+                    showToast(isCapacitor() ? '✅ Carpeta "PrivateNotes" vinculada' : '✅ Carpeta conectada');
                 }
 
                 updateFolderStatus();
@@ -387,12 +387,18 @@ export function initSettings() {
                 if (state.notes.length === 0) {
                     showToast('📥 Recuperando notas de la carpeta...');
                     const result = await FileStorage.pullData(vaultKey);
-                    if (result && result.notes.length > 0) {
+
+                    if (result && result.notes && result.notes.length > 0) {
                         state.notes = result.notes;
                         state.categories = result.categories || [];
                         await saveLocal();
+                        showToast(`✅ ${result.notes.length} notas recuperadas`);
                         setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('ℹ️ No se encontraron notas previas en esta carpeta');
                     }
+                } else {
+                    showToast('✅ Carpeta lista para sincronizar');
                 }
             } catch (e) {
                 console.error(e);
